@@ -18,7 +18,7 @@ limitations under the License.
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Pivotal MySQL*Web - Welcome</title>
+    <title>MySQL*Web - Welcome</title>
 
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -117,7 +117,7 @@ limitations under the License.
 
 <div class="bs-example">
     <div class="page-header">
-        <h1>Pivotal MySQL*Web - <small>Welcome</small></h1>
+        <h1>MySQL*Web - <small>Welcome</small></h1>
     </div>
 </div>
 
@@ -190,7 +190,7 @@ limitations under the License.
                     Size of SQL History List : <span class="label" th:text="${session.prefs.historySize}"/> <br />
                     Records to Display in Worksheet: <span class="label" th:text="${session.prefs.maxRecordsinSQLQueryWindow}"/>
                 <p/>
-                <input type="button" class="btn btn-primary open-modal" value="About Pivotal MySQL*Web" />
+                <input type="button" class="btn btn-primary open-modal" value="About MySQL*Web" />
                 </p>
             </blockquote>
         </div>
@@ -242,17 +242,16 @@ limitations under the License.
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" aria-hidden="true">×</button>
-                <h1 class="modal-title">About Pivotal MySQL*Web</h1>
+                <h1 class="modal-title">About MySQL*Web</h1>
             </div>
             <div class="modal-body">
                 <p style="font-size: 16px">
-                    PivotalMySQL*Web is a browser based SQL tool rendered using Bootstrap UI for MySQL PCF service instances which allows you to run SQL commands and view schema objects from a browser based interface. It includes the following capabilities
+                    MySQL*Web is a browser based SQL tool rendered using Bootstrap UI for MySQL PCF service instances which allows you to run SQL commands and view schema objects from a browser based interface. It includes the following capabilities
                     <ul style="font-size: 16px">
                         <li>Multiple Command SQL worksheet for DDL and DML</li>
                         <li>Run Explain Plan across SQL Statements </li>
                         <li>View/Run DDL command against Tables/Views/Indexes/Constraints</li>
                         <li>Command History</li>
-                        <li>Auto Bind to Pivotal MySQL Services bound to the Application within Pivotal Cloud Foundry (PCF)</li>
                         <li>Manage JDBC Connections</li>
                         <li>Load SQL File into SQL Worksheet from Local File System</li>
                         <li>SQL Worksheet with syntax highlighting support</li>
@@ -261,20 +260,16 @@ limitations under the License.
                         <li>Generate DDL for schema objects</li>
                     </ul>
                     <h3> More Information</h3>
-                    <a href="https://github.com/pivotal-cf/PivotalMySQLWeb" style="font-size: 16px" target="_top">
-                        https://github.com/pivotal-cf/PivotalMySQLWeb
+                    <a href="https://github.com/papicella/PivotalMySQLWeb" style="font-size: 16px" target="_top">
+                        https://github.com/papicella/PivotalMySQLWeb
                     </a>
                     <br />
                 </p>
             </div>
             <div class="modal-footer">
                 <div style="text-align:right">
-                    <img src="images/PoweredByPivotal1.png"
-                         th:src="@{images/PoweredByPivotal1.png}"
-                         alt="MySQLWebFooter"
-                         border="0"/>
                     <br />
-                    &copy; 2017. <a href="mailto:papicella@pivotal.io">Pas Apicella</a>
+                    &copy; 2017. <a href="mailto:pas.apicella@gmail.com">Pas Apicella</a>
                 </div>
             </div>
         </div>
@@ -282,6 +277,36 @@ limitations under the License.
 </div>
 
 <div th:include="footer :: copy"></div>
+
+<script>
+    // Modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const openModalBtn = document.querySelector('.open-modal');
+        const modal = document.getElementById('myModal');
+        const closeBtn = modal.querySelector('.close');
+
+        if (openModalBtn && modal) {
+            // Open modal
+            openModalBtn.addEventListener('click', function() {
+                modal.classList.add('show');
+            });
+
+            // Close modal when clicking close button
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    modal.classList.remove('show');
+                });
+            }
+
+            // Close modal when clicking outside the modal content
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        }
+    });
+</script>
 
 </body>
 </html>

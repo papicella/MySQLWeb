@@ -309,8 +309,32 @@ body {
 .form-group {
     margin-bottom: 15px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 10px;
+}
+
+.form-group-three {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-group-three .help-block {
+    color: var(--text-secondary);
+    font-size: 12px;
+    min-width: 200px;
+    margin: 0;
+}
+
+.form-group .help-block {
+    color: var(--accent-primary);
+    font-size: 13px;
+    font-weight: 500;
+    margin: 0;
+    padding-left: 10px;
+    width: 100%;
 }
 
 .form-group label {
@@ -566,7 +590,7 @@ body {
 }
 
 .page-header h1 {
-    color: var(--text-primary);
+    color: var(--accent-primary);
     font-weight: 700;
     font-size: 24px;
 }

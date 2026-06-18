@@ -18,7 +18,7 @@ limitations under the License.
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
-    <title>Pivotal MySQL*Web - SQL*Worksheet</title>
+    <title>MySQL*Web - SQL*Worksheet</title>
 
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -232,7 +232,7 @@ limitations under the License.
 
 <div class="bs-example">
     <div class="page-header">
-        <h1>Pivotal MySQL*Web - <small>SQL*Worksheet</small></h1>
+        <h1>MySQL*Web - <small>SQL*Worksheet</small></h1>
     </div>
 </div>
 
@@ -490,7 +490,7 @@ limitations under the License.
             <div class="alert alert-danger fade in">
                 <a href="#" class="close">&times;</a>
                 <div>
-                    <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
                 </div>
                 <div>
                     <strong><span th:text="${result.message}" /></strong>
@@ -501,7 +501,7 @@ limitations under the License.
             <div class="alert alert-success fade in">
                 <a href="#" class="close">&times;</a>
                 <div>
-                    <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
                 </div>
                 <div>
                     <strong>Success!</strong> Command completed successfully
@@ -516,7 +516,7 @@ limitations under the License.
         <div class="alert alert-success fade in">
             <a href="#" class="close">&times;</a>
             <div>
-                <b>Pivotal MySQL*Web&gt;</b> <span th:text="${querysql}" />
+                <b>MySQL*Web&gt;</b> <span th:text="${querysql}" />
             </div>
             <div th:if="${queryResultCount != null}">
                 <strong>Success!</strong> Query completed successfully - Total of <span th:text="${queryResultCount}" /> row(s)
@@ -575,7 +575,7 @@ limitations under the License.
             <div class="alert alert-success fade in">
                 <a href="#" class="close">&times;</a>
                 <div>
-                    <b>Pivotal MySQL*Web&gt;</b> <span th:text="${item.value[0]}" />
+                    <b>MySQL*Web&gt;</b> <span th:text="${item.value[0]}" />
                 </div>
                 <strong>Success!</strong> Query Completed Successfully
                 <div th:if="${item.value[2] != null}">
@@ -621,7 +621,7 @@ limitations under the License.
                     <div class="alert alert-danger fade in">
                         <a href="#" class="close">&times;</a>
                         <div>
-                            <b>Pivotal MySQL*Web&gt;</b> <span th:text="${item.value.command}" />
+                            <b>MySQL*Web&gt;</b> <span th:text="${item.value.command}" />
                         </div>
                         <div>
                             <strong><span th:text="${item.value.message}" /></strong>
@@ -632,7 +632,7 @@ limitations under the License.
                     <div class="alert alert-success fade in">
                         <a href="#" class="close">&times;</a>
                         <div>
-                            <b>Pivotal MySQL*Web&gt;</b> <span th:text="${item.value.command}" />
+                            <b>MySQL*Web&gt;</b> <span th:text="${item.value.command}" />
                         </div>
                         <div>
                             <strong>Success!</strong> Command completed successfully
