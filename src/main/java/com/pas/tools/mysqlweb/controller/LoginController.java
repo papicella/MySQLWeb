@@ -1,7 +1,6 @@
 package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Login;
-import com.pas.tools.mysqlweb.beans.MySQLInstance;
 import com.pas.tools.mysqlweb.beans.UserPref;
 import com.pas.tools.mysqlweb.beans.WebResult;
 import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
@@ -10,8 +9,6 @@ import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.utils.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.json.JsonParser;
-import org.springframework.boot.json.JsonParserFactory;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,9 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.servlet.http.HttpSession;
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -38,82 +33,7 @@ public class LoginController
     public String login(Model model, HttpSession session) throws Exception
     {
         log.info("Received request to show login page");
-        WebResult databaseList;
-
-        String jsonString = null;
-        jsonString = System.getenv().get("VCAP_SERVICES");
-
-        if (jsonString != null)
-        {
-            if (jsonString.length() > 0)
-            {
-                try
-                {
-                    ConnectionManager cm = ConnectionManager.getInstance();
-
-                    log.info("** Attempting login using VCAP_SERVICES **");
-                    log.info(jsonString);
-
-                    Login login = Utils.parseLoginCredentials(jsonString);
-
-                    log.info("Login : " + login);
-
-                    MysqlConnection newConn =
-                            new MysqlConnection
-                                    (login.getUrl(), new java.util.Date().toString(), login.getUsername().toUpperCase());
-
-                    cm.addConnection(newConn, session.getId());
-
-                    cm.setupCFDataSource(login);
-
-                    session.setAttribute("user_key", session.getId());
-                    session.setAttribute("user", login.getUsername().toUpperCase());
-                    session.setAttribute("schema", login.getSchema());
-                    session.setAttribute("url", login.getUrl());
-                    session.setAttribute("prefs", userPref);
-                    session.setAttribute("history", new LinkedList());
-                    session.setAttribute("connectedAt", new java.util.Date().toString());
-                    session.setAttribute("themeMain", Themes.defaultTheme);
-                    session.setAttribute("themeMin", Themes.defaultThemeMin);
-
-                    GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
-                    databaseList = genericDAO.runGenericQuery
-                            (Constants.DATABASE_LIST, null, session.getId(), -1);
-
-                    Map<String, Long> schemaMap;
-                    schemaMap = genericDAO.populateSchemaMap(login.getSchema(), session.getId());
-
-                    log.info("schemaMap=" + schemaMap);
-                    session.setAttribute("schemaMap", schemaMap);
-
-                    log.info(userPref.toString());
-
-                    String autobound = mysqlInstanceType(jsonString);
-
-                    List<MySQLInstance> services = Utils.getAllServices(jsonString);
-                    session.setAttribute("autobound", login.getSchema());
-                    session.setAttribute("servicesListSize", services.size());
-                    session.setAttribute("servicesList", services);
-                    model.addAttribute("databaseList", databaseList);
-
-                    return "main";
-
-                }
-                catch (Exception ex)
-                {
-                    // we tried if we can't auto login , just present login screen
-                    model.addAttribute("loginObj", new Login("", "", "jdbc:mysql://localhost:3306/apples", "apples"));
-                    log.info("Auto Login via VCAP_SERVICES Failed - " + ex.getMessage());
-                }
-
-            }
-        }
-        else
-        {
-            model.addAttribute("loginObj", new Login("", "", "jdbc:mysql://localhost:3306/apples", "apples"));
-        }
-
+        model.addAttribute("loginObj", new Login("", "", "jdbc:mysql://localhost:3306/apples", "apples"));
         session.setAttribute("themeMain", Themes.defaultTheme);
         session.setAttribute("themeMin", Themes.defaultThemeMin);
         return "login";
@@ -174,10 +94,6 @@ public class LoginController
 
             log.info("schemaMap=" + schemaMap);
             session.setAttribute("schemaMap", schemaMap);
-            List<MySQLInstance> services = new ArrayList<MySQLInstance>();
-
-            session.setAttribute("servicesListSize", services.size());
-            session.setAttribute("servicesList", services);
 
             model.addAttribute("databaseList", databaseList);
 
@@ -191,35 +107,6 @@ public class LoginController
             session.setAttribute("themeMin", Themes.defaultThemeMin);
             return "login";
         }
-    }
-
-    private String mysqlInstanceType (String jsonString)
-    {
-
-        String mysqlType = null;
-
-        JsonParser parser = JsonParserFactory.getJsonParser();
-
-        Map<String, Object> jsonMap = parser.parseMap(jsonString);
-
-        List mysqlService = null;
-        mysqlService = (List) jsonMap.get("cleardb");
-
-        if (mysqlService == null)
-        {
-            mysqlService = (List) jsonMap.get("p.mysql");
-            if (mysqlService != null) {
-                mysqlType = "P.MYSQL";
-            }
-        }
-        else
-        {
-            mysqlType = "CLEARDB";
-        }
-
-
-        return mysqlType;
-
     }
 
 }

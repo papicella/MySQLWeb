@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="tabs(activeTab)">
+<ul class="nav-tabs">
+    <li th:class="${activeTab == 'home'} ? 'active' : ''">
+        <a th:href="@{/home}">Home</a>
+    </li>
+    <li th:class="${activeTab == 'tables'} ? 'active' : ''">
+        <a th:href="@{/tables}">Tables[<span th:text="${session.schemaMap.Table}" />]</a>
+    </li>
+    <li th:class="${activeTab == 'views'} ? 'active' : ''">
+        <a th:href="@{/views}">Views[<span th:text="${session.schemaMap.View}" />]</a>
+    </li>
+    <li th:class="${activeTab == 'indexes'} ? 'active' : ''">
+        <a th:href="@{/indexes}">Indexes[<span th:text="${session.schemaMap.Index}" />]</a>
+    </li>
+    <li th:class="${activeTab == 'constraints'} ? 'active' : ''">
+        <a th:href="@{/constraints}">Constraints[<span th:text="${session.schemaMap.Constraint}" />]</a>
+    </li>
+    <li th:class="${activeTab == 'query'} ? 'active' : ''">
+        <a th:href="@{/query}">SQL Worksheet</a>
+    </li>
+    <li th:class="${activeTab == 'connections'} ? 'active' : ''">
+        <a th:href="@{/viewconmap}">Connections</a>
+    </li>
+    <li th:class="${activeTab == 'endpoints'} ? 'active' : ''">
+        <a th:href="@{/endpoints}">Endpoints</a>
+    </li>
+    <li th:class="${activeTab == 'info'} ? 'active' : ''">
+        <a th:href="@{/userinfo}">Information</a>
+    </li>
+    <li th:class="${activeTab == 'variables'} ? 'active' : ''">
+        <a th:href="@{/variables}">Variables</a>
+    </li>
+</ul>
+<br />
+</div>
+</body>
+</html>

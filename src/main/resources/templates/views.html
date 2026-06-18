@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
-    <link rel="stylesheet" 
+    <script th:src="@{js/navbar.js}" type="text/javascript"></script>
 
     <!-- Latest compiled and minified JavaScript -->
 
@@ -24,7 +24,13 @@
 
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
-            $('#datatable-mysql').DataTable();
+            var table = $('#datatable-mysql').DataTable({
+                autoWidth: false,
+                scrollX: false
+            });
+            table.columns.adjust().draw();
+            $('#datatable-mysql').css('width', '100%');
+            $('#datatable-mysql_wrapper').css('width', '100%');
         } );
     </script>
 
@@ -41,261 +47,14 @@
 
 </head>
 <body>
-<div class="navbar">
-    <div class="container">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-        </div>
-        <div class="navbar-collapse">
-            <ul class="nav navbar-nav navbar-right nav-pills">
-                <li>
-                    <a th:href="@{/home}">
-                        <img src="images/b_home.png"
-                             th:src="@{images/b_home.png}"
-                             alt="Home"
-                             border="0"/>
-                        Home
-                    </a>
-                </li>
-                <li>
-                    <a th:href="@{/exit}">
-                        <img src="images/s_loggoff.png"
-                             th:src="@{images/s_loggoff.png}"
-                             alt="Logout"
-                             border="0"/>
-                        Logout
-                    </a>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle">Menu <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a th:href="@{/prefs}">
-                                <img src="images/b_props.png"
-                                     th:src="@{images/b_props.png}"
-                                     alt="Preferences"
-                                     border="0"/>
-                                Preferences
-                            </a>
-                        </li>
-                        <li>
-                            <a th:href="@{/endpoints}">
-                                <img src="images/s_notice.png"
-                                     th:src="@{images/s_notice.png}"
-                                     alt="Endpoints"
-                                     border="0"/>
-                                Heath Endpoints
-                            </a>
-                        </li>
-                        <li>
-                            <a href="http://docs.pivotal.io/p-mysql/1-7/" target="_new">
-                                <img src="images/b_docs.png"
-                                     th:src="@{images/b_docs.png}"
-                                     alt="p-mysql docs"
-                                     border="0"/>
-                                p-mysql Doc
-                            </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a th:href="@{/refresh}">
-                                <img src="images/eye.png"
-                                     th:src="@{images/eye.png}"
-                                     alt="Refresh"
-                                     border="0"/>
-                                Refresh
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a th:href="@{/tables}">
-                                <img src="images/s_tbl.png"
-                                     th:src="@{images/s_tbl.png}"
-                                     alt="Tables"
-                                     border="0"/>
-                                Tables[<span th:text="${session.schemaMap.Table}" />]
-                            </a>
-                        </li>
-                        <li>
-                            <a th:href="@{/views}">
-                                <img src="images/b_views.png"
-                                     th:src="@{images/b_views.png}"
-                                     alt="Views"
-                                     border="0"/>
-                                Views[<span th:text="${session.schemaMap.View}" />]
-                            </a>
-                        </li>
-                        <li>
-                            <a th:href="@{/indexes}">
-                                <img src="images/b_index.png"
-                                     th:src="@{images/b_index.png}"
-                                     alt="Indexes"
-                                     border="0"/>
-                                Indexes[<span th:text="${session.schemaMap.Index}" />]
-                            </a>
-                        </li>
-                        <li>
-                            <a th:href="@{/constraints}">
-                                <img src="images/constraints.png"
-                                     th:src="@{images/constraints.png}"
-                                     alt="Constraints"
-                                     border="0"/>
-                                Constraints[<span th:text="${session.schemaMap.Constraint}" />]
-                            </a>
-                        </li>
-                        <li class="divider"></li>
-                        <li>
-                            <a th:href="@{/query}">
-                                <img src="images/b_sql.png"
-                                     th:src="@{images/b_sql.png}"
-                                     alt="SQL Worksheet"
-                                     border="0"/>
-                                SQL Worksheet
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle">Themes <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a th:href="@{/selecttheme(theme='default')}">Default</a></li>
-                        <li><a th:href="@{/selecttheme(theme='sandstone')}">Sandstone</a></li>
-                        <li><a th:href="@{/selecttheme(theme='cyborg')}">Cyborg</a></li>
-                        <li><a th:href="@{/selecttheme(theme='slate')}">Slate</a></li>
-                        <li><a th:href="@{/selecttheme(theme='spacelab')}">Spacelab</a></li>
-                    </ul>
-                </li>
-                <li class="dropdown" th:if="${session.servicesListSize > 0}">
-                    <a href="#" class="dropdown-toggle">Instances <b class="caret"></b></a>
-                    <ul class="dropdown-menu" style="min-width: 300px;">
-                        <div th:each="service : ${session.servicesList}">
-                            <li><a th:href="@{/switchinstance(instanceType=${service.type},instanceName=${service.name})}">Switch to <span th:text="${service.name}" /></a></li>
-                        </div>
-                    </ul>
-                </li>
-                <li>
-                    <a href="#">
-                        <img src="images/b_usrlist.png"
-                             th:src="@{images/b_usrlist.png}"
-                             alt="Users"
-                             border="0"/>
-                        [User: <span th:text="${session.user} ? ${session.user} : 'Not Logged In'">Not Logged In</span>]
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-    </div>
-</div>
-<!-- NAVBAR CODE END -->
-
+<div th:replace="navbar :: bar(false)"></div>
 <div class="bs-example">
     <div class="page-header">
         <h1>MySQL*Web - <small>Views</small></h1>
     </div>
 </div>
 
-<ul class="nav-tabs">
-    <li>
-        <a th:href="@{/home}">
-            <img src="images/b_home.png"
-                 th:src="@{images/b_home.png}"
-                 alt="Home"
-                 border="0"/>
-            Home
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/tables}">
-            <img src="images/s_tbl.png"
-                 th:src="@{images/s_tbl.png}"
-                 alt="Tables"
-                 border="0"/>
-            Tables[<span th:text="${session.schemaMap.Table}" />]
-        </a>
-    </li>
-    <li class="active">
-        <a th:href="@{/views}">
-            <img src="images/b_views.png"
-                 th:src="@{images/b_views.png}"
-                 alt="Views"
-                 border="0"/>
-            Views[<span th:text="${session.schemaMap.View}" />]
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/indexes}">
-            <img src="images/b_index.png"
-                 th:src="@{images/b_index.png}"
-                 alt="Views"
-                 border="0"/>
-            Indexes[<span th:text="${session.schemaMap.Index}" />]
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/constraints}">
-            <img src="images/constraints.png"
-                 th:src="@{images/constraints.png}"
-                 alt="Constraints"
-                 border="0"/>
-            Constraints[<span th:text="${session.schemaMap.Constraint}" />]
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/query}">
-            <img src="images/b_sql.png"
-                 th:src="@{images/b_sql.png}"
-                 alt="SQL Worksheet"
-                 border="0"/>
-            SQL Worksheet
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/viewconmap}">
-            <img src="images/Connection.gif"
-                 th:src="@{images/Connection.gif}"
-                 alt="View Connections"
-                 border="0"/>
-            Connections
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/endpoints}">
-            <img src="images/s_notice.png"
-                 th:src="@{images/s_notice.png}"
-                 alt="Endpoints"
-                 border="0"/>
-            Endpoints
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/userinfo}">
-            <img src="images/s_info.png"
-                 th:src="@{images/s_info.png}"
-                 alt="Information"
-                 border="0"/>
-            Information
-        </a>
-    </li>
-    <li>
-        <a th:href="@{/variables}">
-            <img src="images/s_vars.png"
-                 th:src="@{images/s_vars.png}"
-                 alt="Database Variables"
-                 border="0"/>
-            Variables
-        </a>
-    </li>
-</ul>
-
+<div th:replace="nav-tabs :: tabs('views')"></div>
 <div class="bs-example" th:if="${result != null}">
     <br />
     <div class="col">
@@ -410,7 +169,7 @@
                 </select>
             </div>
             <div class="col">
-                <button type="submit" class="btn btn-primary" name="searchpressed" value="searchpressed"> Search</button>
+                <button type="submit" class="user-badge" name="searchpressed" value="searchpressed">Search</button>
             </div>
         </div>
     </form>
@@ -424,19 +183,17 @@
 </div>
 
 <!-- Add table with Results only if results exist -->
-<div class="bs-example" th:if="${estimatedrecords > 0}">
-    <div class="alert alert-success fade in col-xs-8">
+<div class="bs-example tables-results" th:if="${estimatedrecords > 0}">
+    <div class="alert alert-success fade in">
         <a href="#" class="close">&times;</a>
         <strong>Success!</strong> Found <b th:text="${estimatedrecords}"></b> View(s)
     </div>
-    <div class="col">
+    <div class="table-wrapper">
         <form th:action="@{/views}" method="post" name="tablesForm" id="tablesForm">
             <input type="hidden" name="selectedSchema" th:value="${chosenSchema}" />
-            <table id="datatable-mysql" class="table">
+            <table id="datatable-mysql" class="table tables-main-table views-main-table">
+                <caption class="tables-caption"><b>Views</b></caption>
                 <thead>
-                <tr>
-                    <th colspan="5" style="text-align:center"><b>Views</b></th>
-                </tr>
                 <tr>
                     <th style="text-align:center"></th>
                     <th style="text-align:center">Catalog</th>
@@ -447,7 +204,7 @@
                 </thead>
                 <tbody>
                 <tr th:each="view,iterStat : ${views}">
-                    <td style="text-align:center;width:5%">
+                    <td style="text-align:center">
                         <input type="checkbox"
                                name="selected_view[]"
                                th:value="${view.viewName}"
@@ -456,56 +213,37 @@
                     <td th:text="${view.catalog}" style="text-align:center"></td>
                     <td th:text="${view.schemaName}" style="text-align:center"></td>
                     <td th:text="${view.viewName}" style="text-align:center"></td>
-                    <td style="text-align:center ">
-                        <a th:href="@{/executequery(query='select * from ' + ${chosenSchema} + '.' + ${view.viewName})}">
-                            <img src="images/b_views.png"
-                                 th:src="@{images/b_views.png}"
-                                 alt="View Data"
-                                 width="16" height="16"
-                                 title="View Data"
-                                 border="0"/>
-                        </a>&nbsp;
-                        <a th:href="@{/views(viewName=${view.viewName},viewAction='DROP',selectedSchema=${chosenSchema})}"
-                        th:data1="${view.viewName}"
-                        th:onclick="'return confirmLink(this, \'Drop VIEW ' + this.getAttribute('data1') + '?\')'">
-                            <img src="images/b_drop.png"
-                                 th:src="@{images/b_drop.png}"
-                                 alt="Drop View"
-                                 width="16" height="16"
-                                 title="Drop View"
-                                 border="0"/>
-                        </a>&nbsp;
-                        <a th:href="@{/views(viewName=${view.viewName},viewAction='DEF',selectedSchema=${chosenSchema})}">
-                            <img src="images/b_tbloptimize.png"
-                                 th:src="@{images/b_tbloptimize.png}"
-                                 alt="View Definition"
-                                 width="16" height="16"
-                                 title="View Details"
-                                 border="0"/>
-                        </a>&nbsp;
+                    <td style="text-align:center">
+                        <div class="action-buttons">
+                            <a class="user-badge"
+                               th:href="@{/executequery(query='select * from ' + ${chosenSchema} + '.' + ${view.viewName})}"
+                               title="View Data">View</a>
+                            <a class="user-badge"
+                               th:href="@{/views(viewName=${view.viewName},viewAction='DROP',selectedSchema=${chosenSchema})}"
+                               th:data1="${view.viewName}"
+                               th:onclick="'return confirmLink(this, \'Drop VIEW ' + this.getAttribute('data1') + '?\')'"
+                               title="Drop View">Drop</a>
+                            <a class="user-badge"
+                               th:href="@{/views(viewName=${view.viewName},viewAction='DEF',selectedSchema=${chosenSchema})}"
+                               title="View Definition">Definition</a>
+                        </div>
                     </td>
                 </tr>
                 </tbody>
             </table>
 
-            <div class="clearfloat">
+            <div class="clearfloat tables-bulk-actions">
                 <div class="col">
-                    <img class="selectallarrow"
-                         src="images/arrow_ltr.png"
-                         th:src="@{images/arrow_ltr.png}"
-                         width="38" height="22" alt="With selected:" />
-                    <a th:href="@{/views(selectedSchema=${chosenSchema})}"
+                    <a class="user-badge" th:href="@{/views(selectedSchema=${chosenSchema})}"
                        onclick="if (setCheckboxes('datatable-mysql', 'true')) return false;">
                         Check All</a>
-
-                    /
-                    <a th:href="@{/views(selectedSchema=${chosenSchema})}"
+                    <a class="user-badge" th:href="@{/views(selectedSchema=${chosenSchema})}"
                        onclick="if (unMarkAllRows('tablesForm')) return false;">
                         Uncheck All</a>
                 </div>
 
                 <div class="col">
-                    <select name="submit_mult" onchange="if(confirm('This action can not be reversed are you sure you want to continue?')){this.form.submit();}" style="margin: 0 3em 0 3em;" class="input">
+                    <select name="submit_mult" onchange="if(confirm('This action can not be reversed are you sure you want to continue?')){this.form.submit();}" class="input">
                         <option value="With selected:" selected="selected">With selected:</option>
                         <option value="Drop" >Drop</option>
                     </select>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="navbar" th:fragment="bar(simple)">
+    <div class="container navbar-container">
+        <a class="navbar-brand" th:href="@{/home}">
+            MySQL<span class="brand-accent">*</span>Web
+        </a>
+        <button type="button" class="navbar-toggle" aria-label="Toggle navigation">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+        <div class="navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li>
+                    <a th:href="@{/home}">Home</a>
+                </li>
+                <li>
+                    <a th:href="@{/exit}">Logout</a>
+                </li>
+                <li class="dropdown" th:if="${!simple}">
+                    <a href="#" class="dropdown-toggle">Menu <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a th:href="@{/prefs}">Preferences</a>
+                        </li>
+                        <li>
+                            <a th:href="@{/endpoints}">Health Endpoints</a>
+                        </li>
+                        <li>
+                            <a href="http://docs.pivotal.io/p-mysql/1-7/" target="_blank" rel="noopener">p-mysql Doc</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a th:href="@{/refresh}">Refresh</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="dropdown" th:if="${!simple}">
+                    <a href="#" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a th:href="@{/tables}">Tables [<span th:text="${session.schemaMap.Table}" />]</a>
+                        </li>
+                        <li>
+                            <a th:href="@{/views}">Views [<span th:text="${session.schemaMap.View}" />]</a>
+                        </li>
+                        <li>
+                            <a th:href="@{/indexes}">Indexes [<span th:text="${session.schemaMap.Index}" />]</a>
+                        </li>
+                        <li>
+                            <a th:href="@{/constraints}">Constraints [<span th:text="${session.schemaMap.Constraint}" />]</a>
+                        </li>
+                        <li class="divider"></li>
+                        <li>
+                            <a th:href="@{/query}">SQL Worksheet</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-user" th:if="${!simple}">
+                    <div class="nav-user-group">
+                        <span class="user-badge connection-badge"
+                              th:if="${session.url != null}"
+                              th:text="${session.url}"
+                              th:title="${session.url}"></span>
+                        <span class="user-badge">
+                            <span th:text="${session.user} ? ${session.user} : 'Not Logged In'">Not Logged In</span>
+                        </span>
+                    </div>
+                </li>
+                <li class="nav-user" th:if="${simple}">
+                    <span class="user-badge">
+                        <span th:text="${session.user} ? ${session.user} : 'Not Logged In'">Not Logged In</span>
+                    </span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+</body>
+</html>
