@@ -27,42 +27,26 @@ limitations under the License.
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMain}}" media="screen" />
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMin}}" />
+    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
+    <link rel="stylesheet" 
 
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
     <style>
-        .navbar-brand
-        {
-            position: absolute;
-            width: 100%;
-            left: 0;
-            margin: auto;
-            margin-left: 48%;
-        }
     </style>
 </head>
 <body>
 
-<div class="navbar navbar-default">
+<div class="navbar">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <button type="button" class="navbar-toggle">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <div class="navbar-brand navbar-left">
-                <a href="#">
-                    <img src="images/PVLG-PivotalMYSQLWeb-SM.png"
-                         th:src="@{images/PVLG-PivotalMYSQLWeb-SM.png}"
-                         alt="Brand" />
-                </a>
-            </div>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse">
             <ul class="nav navbar-nav navbar-right nav-pills">
                 <li>
                     <a th:href="@{/home}">
@@ -83,7 +67,7 @@ limitations under the License.
                     </a>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Menu <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Menu <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/prefs}">
@@ -125,7 +109,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/tables}">
@@ -176,7 +160,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Themes <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Themes <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li><a th:href="@{/selecttheme(theme='default')}">Default</a></li>
                         <li><a th:href="@{/selecttheme(theme='sandstone')}">Sandstone</a></li>
@@ -186,7 +170,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown" th:if="${session.servicesListSize > 0}">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Instances <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Instances <b class="caret"></b></a>
                     <ul class="dropdown-menu" style="min-width: 300px;">
                         <div th:each="service : ${session.servicesList}">
                             <li><a th:href="@{/switchinstance(instanceType=${service.type},instanceName=${service.name})}">Switch to <span th:text="${service.name}" /></a></li>
@@ -215,7 +199,7 @@ limitations under the License.
     </div>
 </div>
 
-<ul class="nav nav-tabs">
+<ul class="nav-tabs">
     <li>
         <a th:href="@{/home}">
             <img src="images/b_home.png"
@@ -311,19 +295,19 @@ limitations under the License.
 <div th:if="${historysize == 0}">
     <br />
     <div class="alert alert-info fade in">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <a href="#" class="close">&times;</a>
         No command(s) currently exist
     </div>
 </div>
 
 <div th:if="${historysize != 0}">
-    <div class="col-xs-8">
+    <div class="col">
         <br />
         <div class="alert alert-success fade in">
-            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            <a href="#" class="close">&times;</a>
             <strong>Success!</strong> Found <b th:text="${historysize}"></b> Command(s)
         </div>
-        <table class="table table-hover table-bordered table-striped table-condensed" id="table_results">
+        <table class="table" id="table_results">
             <thead>
             <tr>
                 <th colspan="2" style="text-align:center"><b>Command History</b></th>

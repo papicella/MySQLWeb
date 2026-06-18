@@ -27,67 +27,32 @@ limitations under the License.
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 
-    <link rel="stylesheet" th:href="@{themes/bootstrap-darkly.css}" media="screen" />
-    <link rel="stylesheet" th:href="@{themes/custom-darkly.min.css}" />
+    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
 
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
     <style>
-        .navbar-brand
-        {
-            position: absolute;
-            width: 100%;
-            left: 0;
-            margin: auto;
-            margin-left: 48%;
-        }
     </style>
 </head>
 <body>
-<div class="navbar navbar-default">
+<div class="navbar">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <button type="button" class="navbar-toggle">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <div class="navbar-brand navbar-left">
-                <a href="#">
-                    <img src="images/PVLG-PivotalMYSQLWeb-SM.png"
-                         th:src="@{images/PVLG-PivotalMYSQLWeb-SM.png}"
-                         alt="Brand" />
-                </a>
-            </div>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse">
             <ul class="nav navbar-nav navbar-right  ">
                 <li>
-                    <a th:href="@{/home}">
-                        <img src="images/b_home.png"
-                             th:src="@{images/b_home.png}"
-                             alt="Home"
-                             border="0"/>
-                        Home
-                    </a>
+                    <a th:href="@{/home}">Home</a>
                 </li>
                 <li>
-                    <a th:href="@{/exit}">
-                        <img src="images/s_loggoff.png"
-                             th:src="@{images/s_loggoff.png}"
-                             alt="Logout"
-                             border="0"/>
-                        Logout
-                    </a>
+                    <a th:href="@{/exit}">Logout</a>
                 </li>
                 <li>
-                    <a href="#">
-                        <img src="images/b_usrlist.png"
-                             th:src="@{images/b_usrlist.png}"
-                             alt="Users"
-                             border="0"/>
-                        [User: <span th:text="${session.user} ? ${session.user} : 'Not Logged In'">Not Logged In</span>]
-                    </a>
+                    <a href="#">[User: <span th:text="${session.user} ? ${session.user} : 'Not Logged In'">Not Logged In</span>]</a>
                 </li>
             </ul>
         </div>
@@ -105,50 +70,45 @@ limitations under the License.
 
 <div th:if="${loginerror != null}">
     <div class="alert alert-danger fade in">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <a href="#" class="close">&times;</a>
         <strong>Error!</strong> <span th:text="${loginerror}" />
     </div>
 </div>
 
 <div class="bs-example">
-    <form th:action="@{/login}" method="post" class="form-horizontal">
-        <div class="form-group">
-            <label for="username" class="control-label col-xs-2">Username</label>
-            <div class="col-xs-6">
+    <div class="login-container">
+        <form th:action="@{/login}" method="post" class="form">
+            <div class="form-group">
+                <label for="username">Username</label>
                 <div class="input-group">
-                    <span class="input-group-addon"><span class="glyphicon glyphicon-user"></span></span>
-                    <input type="text" class="form-control" id="username" name="username"
+                    <span class="input-addon">👤</span>
+                    <input type="text" class="input" id="username" name="username"
                            placeholder="Username" />
                 </div>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="password" class="control-label col-xs-2">Password</label>
-            <div class="col-xs-6">
+            <div class="form-group">
+                <label for="password">Password</label>
                 <div class="input-group">
-                    <span class="input-group-addon"><span class="glyphicon glyphicon-lock"></span></span>
-                    <input type="password" class="form-control" id="password" name="password"
+                    <span class="input-addon">🔒</span>
+                    <input type="password" class="input" id="password" name="password"
                            placeholder="Password" />
                 </div>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="url" class="control-label col-xs-2">Url</label>
-            <div class="col-xs-6">
-                <input type="text" class="form-control" id="url" name="url"
-                       placeholder="MySQL JDBC Url" />
+            <div class="form-group">
+                <label for="url">Url</label>
+                <div class="input-group">
+                    <span class="input-addon">🔗</span>
+                    <input type="text" class="input" id="url" name="url"
+                           placeholder="MySQL JDBC Url" />
+                </div>
                 <span class="help-block">jdbc:mysql://localhost:3306/apples</span>
             </div>
-        </div>
-        <div class="form-group">
-            <div class="col-xs-offset-2 col-xs-10">
-                <button type="submit" class="btn btn-primary">
-                    <span class="glyphicon glyphicon-log-in"></span> Login
-                </button>
+            <div class="form-group button-group">
+                <button type="submit" class="btn btn-primary">Login</button>
                 <button type="reset" class="btn btn-primary">Reset</button>
             </div>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <div th:include="footer :: copy"></div>

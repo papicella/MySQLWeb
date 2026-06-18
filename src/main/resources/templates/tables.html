@@ -24,11 +24,9 @@ limitations under the License.
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMain}}" media="screen" />
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMin}}" />
+    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
 
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -37,7 +35,6 @@ limitations under the License.
 
     <link href="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
     <script src="https://cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.js"></script>
 
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
 
@@ -56,36 +53,21 @@ limitations under the License.
     </script>
 
     <style>
-        .navbar-brand
-        {
-            position: absolute;
-            width: 100%;
-            left: 0;
-            margin: auto;
-            margin-left: 48%;
-        }
     </style>
 
 </head>
 <body>
 
-<div class="navbar navbar-default">
+<div class="navbar">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <button type="button" class="navbar-toggle">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <div class="navbar-brand navbar-left">
-                <a href="#">
-                    <img src="images/PVLG-PivotalMYSQLWeb-SM.png"
-                         th:src="@{images/PVLG-PivotalMYSQLWeb-SM.png}"
-                         alt="Brand" />
-                </a>
-            </div>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse">
             <ul class="nav navbar-nav navbar-right nav-pills">
                 <li>
                     <a th:href="@{/home}">
@@ -106,7 +88,7 @@ limitations under the License.
                     </a>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Menu <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Menu <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/prefs}">
@@ -148,7 +130,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/tables}">
@@ -198,18 +180,8 @@ limitations under the License.
                         </li>
                     </ul>
                 </li>
-                <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Themes <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a th:href="@{/selecttheme(theme='default')}">Default</a></li>
-                        <li><a th:href="@{/selecttheme(theme='sandstone')}">Sandstone</a></li>
-                        <li><a th:href="@{/selecttheme(theme='cyborg')}">Cyborg</a></li>
-                        <li><a th:href="@{/selecttheme(theme='slate')}">Slate</a></li>
-                        <li><a th:href="@{/selecttheme(theme='spacelab')}">Spacelab</a></li>
-                    </ul>
-                </li>
                 <li class="dropdown" th:if="${session.servicesListSize > 0}">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Instances <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Instances <b class="caret"></b></a>
                     <ul class="dropdown-menu" style="min-width: 300px;">
                         <div th:each="service : ${session.servicesList}">
                             <li><a th:href="@{/switchinstance(instanceType=${service.type},instanceName=${service.name})}">Switch to <span th:text="${service.name}" /></a></li>
@@ -238,7 +210,7 @@ limitations under the License.
     </div>
 </div>
 
-<ul class="nav nav-tabs">
+<ul class="nav-tabs">
     <li>
         <a th:href="@{/home}">
             <img src="images/b_home.png"
@@ -331,20 +303,20 @@ limitations under the License.
     </li>
 </ul>
 
-<div class="col-xs-6" th:if="${tableDDL != null}">
+<div class="col" th:if="${tableDDL != null}">
     <div class="panel-group" id="accordion">
         <br />
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <a data-parent="#accordion" href="#collapseOne">
                         <span th:text="${tablename}" /> DDL
                     </a>
                 </h4>
             </div>
             <div id="collapseOne" class="panel-collapse collapse in">
                 <div class="panel-body">
-                    <table class="table table-hover table-bordered table-striped table-condensed">
+                    <table class="table">
                         <tbody>
                         <tr>
                             <td>
@@ -361,15 +333,15 @@ limitations under the License.
 
 <div class="bs-example" th:if="${result != null}">
     <br />
-    <div class="col-xs-8">
+    <div class="col">
         <div th:if="${#strings.contains(result.message, 'ERROR:')}">
             <div class="alert alert-danger fade in">
-                <a href="#" class="close" data-dismiss="alert">&times;</a>
+                <a href="#" class="close">&times;</a>
                 <div>
                     <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
                 </div>
             </div>
-            <table class="table table-hover table-bordered table-striped table-condensed">
+            <table class="table">
                 <tr class="info">
                     <td th:text="${result.message}" style="text-align:left} " ></td>
                 </tr>
@@ -377,7 +349,7 @@ limitations under the License.
         </div>
         <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
             <div class="alert alert-success fade in">
-                <a href="#" class="close" data-dismiss="alert">&times;</a>
+                <a href="#" class="close">&times;</a>
                 <div>
                     <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
                 </div>
@@ -388,16 +360,16 @@ limitations under the License.
 
 <div class="bs-example" th:if="${arrayresult != null}">
     <br />
-    <div class="col-xs-8">
+    <div class="col">
         <div th:each="result : ${arrayresult}">
             <div th:if="${#strings.contains(result.message, 'ERROR:')}">
                 <div class="alert alert-danger fade in">
-                    <a href="#" class="close" data-dismiss="alert">&times;</a>
+                    <a href="#" class="close">&times;</a>
                     <div>
                         <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
                     </div>
                 </div>
-                <table class="table table-hover table-bordered table-striped table-condensed">
+                <table class="table">
                     <tr class="info">
                         <td style="text-align: right">Message:</td>
                         <td th:text="${result.message}" style="text-align:left} " ></td>
@@ -406,7 +378,7 @@ limitations under the License.
             </div>
             <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
                 <div class="alert alert-success fade in">
-                    <a href="#" class="close" data-dismiss="alert">&times;</a>
+                    <a href="#" class="close">&times;</a>
                     <div>
                         <b>Pivotal MySQL*Web&gt;</b> <span th:text="${result.command}" />
                     </div>
@@ -416,13 +388,13 @@ limitations under the License.
     </div>
 </div>
 
-<div class="col-xs-6">
+<div class="col">
     <div class="panel-group" id="accordion" th:if="${tableStructure != null}">
         <br />
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <a data-parent="#accordion" href="#collapseOne">
                         <span th:text="${tablename}" /> Structure
                     </a>
                 </h4>
@@ -451,13 +423,13 @@ limitations under the License.
     </div>
 </div>
 
-<div class="col-xs-8">
+<div class="col">
     <div class="panel-group" id="accordion2" th:if="${tableDetails != null}">
         <br />
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                    <a data-parent="#accordion2" href="#collapseTwo">
                         <span th:text="${tablename}" /> Details
                     </a>
                 </h4>
@@ -486,15 +458,15 @@ limitations under the License.
     </div>
 </div>
 
-<div class="col-xs-12" th:if="${tableIndexes != null}">
+<div class="col" th:if="${tableIndexes != null}">
     <h3><span th:text="${tablename}" /> Indexes </h3>
     <div class="bs-example">
         <div class="alert alert-success fade in">
-            <a href="#" class="close" data-dismiss="alert">&times;</a>
+            <a href="#" class="close">&times;</a>
             <strong>Success!</strong> Query Completed successfully
         </div>
     </div>
-    <table class="table table-hover table-bordered table-striped table-condensed">
+    <table class="table">
         <thead>
         <div th:each="columnName : ${tableIndexes.columnNames}">
             <th style="text-align:center"><span th:text="${columnName}"/></th>
@@ -518,13 +490,13 @@ limitations under the License.
 
 <div class="bs-example">
     <br />
-    <form th:action="@{/tables}" method="post" class="form-horizontal">
+    <form th:action="@{/tables}" method="post" class="form">
         <div class="form-group ">
-            <div class="col-xs-2">
-                <input type="text" id="search" name="search" placeholder="Table Name" class="form-control" />
+            <div class="col">
+                <input type="text" id="search" name="search" placeholder="Table Name" class="input" />
             </div>
-            <div class="col-xs-2">
-                <select id="selectedSchema" name="selectedSchema" class="form-control">
+            <div class="col">
+                <select id="selectedSchema" name="selectedSchema" class="input">
                     <table>
                         <tr th:each="schema : ${schemas}">
                             <div th:if="${schema == chosenSchema}">
@@ -541,8 +513,8 @@ limitations under the License.
                     </table>
                 </select>
             </div>
-            <div class="col-xs-2">
-                <button type="submit" class="btn btn-primary" name="searchpressed" value="searchpressed"><span class="glyphicon glyphicon-search"></span> Search</button>
+            <div class="col">
+                <button type="submit" class="btn btn-primary" name="searchpressed" value="searchpressed"> Search</button>
             </div>
         </div>
     </form>
@@ -550,7 +522,7 @@ limitations under the License.
 
 <div class="bs-example" th:if="${estimatedrecords == 0}">
     <div class="alert alert-info fade in">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <a href="#" class="close">&times;</a>
         <strong>Info!</strong> Found 0 Tables
     </div>
 </div>
@@ -558,13 +530,13 @@ limitations under the License.
 <!-- Add table with Results only if results exist -->
 <div class="bs-example" th:if="${estimatedrecords > 0}">
     <div class="alert alert-success fade in col-xs-12">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <a href="#" class="close">&times;</a>
         <strong>Success!</strong> Found <b th:text="${estimatedrecords}"></b> Table(s)
     </div>
-    <div class="col-xs-12">
+    <div class="col">
         <form th:action="@{/tables}" method="post" name="tablesForm" id="tablesForm">
             <input type="hidden" name="selectedSchema" th:value="${chosenSchema}" />
-            <table id="datatable-mysql" class="table table-hover table-bordered table-striped table-condensed">
+            <table id="datatable-mysql" class="table">
                 <thead>
                 <tr>
                     <th colspan="6" style="text-align:center"><b>Tables</b></th>
@@ -600,7 +572,7 @@ limitations under the License.
                                  th:src="@{images/b_views.png}"
                                  alt="View Data"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="View Data"
+                                 title="View Data"
                                  border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='DROP',selectedSchema=${chosenSchema})}"
@@ -610,7 +582,7 @@ limitations under the License.
                                  th:src="@{images/b_drop.png}"
                                  alt="Drop Table"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="Drop Table"
+                                 title="Drop Table"
                                  border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='EMPTY',selectedSchema=${chosenSchema})}"
@@ -620,7 +592,7 @@ limitations under the License.
                                  th:src="@{images/b_empty.png}"
                                  alt="Truncate Table"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="Truncate Table"
+                                 title="Truncate Table"
                                  border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='STRUCTURE',selectedSchema=${chosenSchema})}">
@@ -628,7 +600,7 @@ limitations under the License.
                                  th:src="@{images/b_tbloptimize.png}"
                                  alt="Table Structure"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="View Table Structure"
+                                 title="View Table Structure"
                                  border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='DETAILS',selectedSchema=${chosenSchema})}">
@@ -636,7 +608,7 @@ limitations under the License.
                                  th:src="@{images/b_tblanalyse.png}"
                                  alt="Table Details"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="View Table Details"
+                                 title="View Table Details"
                                  border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='DDL',selectedSchema=${chosenSchema})}">
@@ -644,7 +616,7 @@ limitations under the License.
                              th:src="@{images/s_vars.png}"
                              alt="Generate Table DDL"
                              width="16" height="16"
-                             data-toggle="tooltip" title="Generate Table DDL"
+                             title="Generate Table DDL"
                              border="0"/>
                         </a>&nbsp;
                         <a th:href="@{/tables(tabName=${table.tableName},tabAction='INDEXES',selectedSchema=${chosenSchema})}">
@@ -652,7 +624,7 @@ limitations under the License.
                                  th:src="@{images/b_index.png}"
                                  alt="Show Table Indexes"
                                  width="16" height="16"
-                                 data-toggle="tooltip" title="Show Table Indexes"
+                                 title="Show Table Indexes"
                                  border="0"/>
                         </a>&nbsp;
                     </td>
@@ -661,7 +633,7 @@ limitations under the License.
             </table>
 
             <div class="clearfloat">
-                <div class="col-xs-3">
+                <div class="col">
                     <img class="selectallarrow"
                          src="images/arrow_ltr.png"
                          th:src="@{images/arrow_ltr.png}"
@@ -675,8 +647,8 @@ limitations under the License.
                         Uncheck All</a>
                 </div>
 
-                <div class="col-xs-2">
-                    <select name="submit_mult" onchange="if(confirm('This action can not be reversed are you sure you want to continue?')){this.form.submit();}" style="margin: 0 3em 0 3em;" class="form-control">
+                <div class="col">
+                    <select name="submit_mult" onchange="if(confirm('This action can not be reversed are you sure you want to continue?')){this.form.submit();}" style="margin: 0 3em 0 3em;" class="input">
                         <option value="With selected:" selected="selected">With selected:</option>
                         <option value="Drop" >Drop</option>
                         <option value="Empty" >Truncate</option>

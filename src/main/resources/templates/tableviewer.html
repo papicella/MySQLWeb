@@ -24,11 +24,10 @@ limitations under the License.
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMain}}" media="screen" />
-    <link rel="stylesheet" th:href="@{'themes/' + ${session.themeMin}}" />
+    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
+    <link rel="stylesheet" 
 
     <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -37,7 +36,6 @@ limitations under the License.
 
     <link href="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
     <script src="https://cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.js"></script>
 
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
 
@@ -56,36 +54,21 @@ limitations under the License.
     </script>
 
     <style>
-        .navbar-brand
-        {
-            position: absolute;
-            width: 100%;
-            left: 0;
-            margin: auto;
-            margin-left: 48%;
-        }
     </style>
 
 </head>
 <body>
 
-<div class="navbar navbar-default">
+<div class="navbar">
     <div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <button type="button" class="navbar-toggle">
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <div class="navbar-brand navbar-left">
-                <a href="#">
-                    <img src="images/PVLG-PivotalMYSQLWeb-SM.png"
-                         th:src="@{images/PVLG-PivotalMYSQLWeb-SM.png}"
-                         alt="Brand" />
-                </a>
-            </div>
         </div>
-        <div class="navbar-collapse collapse">
+        <div class="navbar-collapse">
             <ul class="nav navbar-nav navbar-right nav-pills">
                 <li>
                     <a th:href="@{/home}">
@@ -106,7 +89,7 @@ limitations under the License.
                     </a>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Menu <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Menu <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/prefs}">
@@ -148,7 +131,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Schema Objects <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li>
                             <a th:href="@{/tables}">
@@ -199,7 +182,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Themes <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Themes <b class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li><a th:href="@{/selecttheme(theme='default')}">Default</a></li>
                         <li><a th:href="@{/selecttheme(theme='sandstone')}">Sandstone</a></li>
@@ -209,7 +192,7 @@ limitations under the License.
                     </ul>
                 </li>
                 <li class="dropdown" th:if="${session.servicesListSize > 0}">
-                    <a href="#" data-toggle="dropdown" class="dropdown-toggle">Instances <b class="caret"></b></a>
+                    <a href="#" class="dropdown-toggle">Instances <b class="caret"></b></a>
                     <ul class="dropdown-menu" style="min-width: 300px;">
                         <div th:each="service : ${session.servicesList}">
                             <li><a th:href="@{/switchinstance(instanceType=${service.type},instanceName=${service.name})}">Switch to <span th:text="${service.name}" /></a></li>
@@ -238,7 +221,7 @@ limitations under the License.
     </div>
 </div>
 
-<ul class="nav nav-tabs">
+<ul class="nav-tabs">
     <li>
         <a th:href="@{/home}">
             <img src="images/b_home.png"
@@ -331,13 +314,13 @@ limitations under the License.
     </li>
 </ul>
 
-<div class="col-xs-12" th:if="${queryResults != null}">
+<div class="col" th:if="${queryResults != null}">
     <h2>Sample Data</h2>
     <div class="alert alert-info fade in" th:if="${queryResultsSize == 0}">
-        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <a href="#" class="close">&times;</a>
         <strong>Info!</strong> No Data Found
     </div>
-    <table id="datatable-mysql" class="table table-hover table-bordered table-striped table-condensed">
+    <table id="datatable-mysql" class="table">
         <thead>
         <div th:each="columnName : ${queryResults.columnNames}">
             <th style="text-align:center"><span th:text="${columnName}"/></th>
@@ -356,20 +339,20 @@ limitations under the License.
     <br />
 </div>
 
-<div class="col-xs-12">
+<div class="col">
     <div class="panel-group" id="accordion">
         <br />
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne">
+                    <a data-parent="#accordion" href="#collapseOne">
                         DDL [<span th:text="${tablename}" />]
                     </a>
                 </h3>
             </div>
             <div id="collapseOne" class="panel-collapse collapse">
                 <div class="panel-body">
-                    <table class="table table-hover table-bordered table-striped table-condensed">
+                    <table class="table">
                         <tbody>
                         <tr>
                             <td>
@@ -381,17 +364,17 @@ limitations under the License.
                 </div>
             </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h3 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                    <a data-parent="#accordion" href="#collapseTwo">
                         DESCRIBE [<span th:text="${tablename}" />]
                     </a>
                 </h3>
             </div>
             <div id="collapseTwo" class="panel-collapse collapse">
                 <div class="panel-body">
-                    <table id="datatable-mysql" class="table table-hover table-bordered table-striped table-condensed">
+                    <table id="datatable-mysql" class="table">
                         <thead>
                         <div th:each="columnName : ${queryResultsDescribe.columnNames}">
                             <th style="text-align:center"><span th:text="${columnName}"/></th>
@@ -410,10 +393,10 @@ limitations under the License.
                 </div>
             </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                    <a data-parent="#accordion2" href="#collapseThree">
                         DETAILS [<span th:text="${tablename}" />]
                     </a>
                 </h4>
@@ -439,17 +422,17 @@ limitations under the License.
                 </div>
             </div>
         </div>
-        <div class="panel panel-default">
+        <div class="panel">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
+                    <a data-parent="#accordion2" href="#collapseFour">
                         INDEXES [<span th:text="${tablename}" />]
                     </a>
                 </h4>
             </div>
             <div id="collapseFour" class="panel-collapse collapse">
                 <div class="panel-body">
-                    <table class="table table-hover table-bordered table-striped table-condensed">
+                    <table class="table">
                         <thead>
                         <div th:each="columnName : ${tableIndexes.columnNames}">
                             <th style="text-align:center"><span th:text="${columnName}"/></th>
