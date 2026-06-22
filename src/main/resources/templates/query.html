@@ -9,20 +9,8 @@
 
     <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
     <script th:src="@{js/navbar.js}" type="text/javascript"></script>
-
-    <link rel="stylesheet" 
-
-    <!-- Latest compiled and minified JavaScript -->
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-    <script type="text/javascript" src="https://cdn.datatables.net/r/bs-3.3.5/jqc-1.11.3,dt-1.10.8/datatables.min.js"></script>
-
-    <link href="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
-    <script src="https://cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
-
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
+    <script th:src="@{js/interactive-table.js}" type="text/javascript"></script>
     <script th:src="@{edit_area/edit_area_full.js}" type="text/javascript"></script>
 
     <script language="Javascript" type="text/javascript">
@@ -48,16 +36,8 @@
         }
     </script>
 
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function() {
-            $('#datatable-mysql').DataTable();
-        } );
-    </script>
-
-    <style>
-    </style>
 </head>
-<body>
+<body class="page-compact">
 
 <div th:replace="navbar :: bar(false)"></div>
 <div class="bs-example">
@@ -76,31 +56,32 @@
     </div>
 </div>
 
-<div class="col" th:if="${explainresult != null}">
-    <h3>Explain Result</h3>
-    <div class="bs-example">
-        <div class="alert alert-success fade in">
-            <a href="#" class="close">&times;</a>
-            <strong>Success!</strong> Explain Plan Completed successfully
-        </div>
+<div class="bs-example tables-page-main" th:if="${explainresult != null}">
+    <div class="alert alert-success fade in">
+        <a href="#" class="close">&times;</a>
+        <strong>Success!</strong> Explain Plan Completed successfully
     </div>
-    <table class="table">
-        <thead>
-        <div th:each="columnName : ${explainresult.columnNames}">
-            <th style="text-align:center"><span th:text="${columnName}"/></th>
-        </div>
-        </thead>
-        <tbody>
-        <div th:each="rows : ${explainresult.rows}">
+</div>
+
+<div class="bs-example tables-results" th:if="${explainresult != null}">
+    <div class="table-wrapper">
+        <table data-interactive-table class="table variables-main-table">
+            <thead>
             <tr>
-                <div th:each="columnName : ${explainresult.columnNames}">
-                    <td style="text-align:center"><span th:text="${rows.get(columnName)}"/></td>
-                </div>
+                <th th:each="columnName : ${explainresult.columnNames}"
+                    style="text-align:center"
+                    th:text="${columnName}"></th>
             </tr>
-        </div>
-        </tbody>
-    </table>
-    <br />
+            </thead>
+            <tbody>
+            <tr th:each="rows : ${explainresult.rows}">
+                <td th:each="columnName : ${explainresult.columnNames}"
+                    style="text-align:center"
+                    th:text="${rows.get(columnName)}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div>
@@ -119,104 +100,53 @@
 </div>
 
 <br />
-<div class="bs-example">
-    <form th:action="@{/query}" method="post" class="form">
-        <div class="form-group">
-            <div class="col">
-                <a th:href="@{/query(action=commit)}">
-                    <img src="images/commit.png"
-                         th:src="@{images/commit.png}"
-                         alt="Commit"
-                         title="Commit Current Transaction"
-                         border="0"/>
-                    Commit
-                </a>&nbsp;
-                <a th:href="@{/query(action=rollback)}">
-                    <img src="images/rollback.png"
-                         th:src="@{images/rollback.png}"
-                         alt="Rollback"
-                         title="Rollback Current Transaction"
-                         border="0"/>
-                    Rollback
-                </a>&nbsp;&nbsp;
-                <a th:href="@{/history}">
-                    <img src="images/b_props.png"
-                         th:src="@{images/b_props.png}"
-                         alt="History"
-                         title="View Successful Command History"
-                         border="0"/>
-                    History
-                </a>&nbsp;&nbsp;
-                <div class="col">
-                    Query Count:
-                </div>
-                <div class="col">
-                    <select id="queryCount" name="queryCount" class="input">
-                        <div th:switch="${queryCount}">
-                            <div th:case="'N'">
-                                <option value="N" selected="selected">No</option>
-                                <option value="Y">Yes</option>
-                            </div>
-                            <div th:case="'Y'">
-                                <option value="N">No</option>
-                                <option value="Y" selected="selected">Yes</option>
-                            </div>
-                        </div>
-                    </select>
-                </div>
-                <div class="col">
-                    Elapsed Time:
-                </div>
-                <div class="col">
-                    <select id="elapsedTime" name="elapsedTime" class="input">
-                        <div th:switch="${elapsedTime}">
-                            <div th:case="'N'">
-                                <option value="N" selected="selected">No</option>
-                                <option value="Y">Yes</option>
-                            </div>
-                            <div th:case="'Y'">
-                                <option value="N">No</option>
-                                <option value="Y" selected="selected">Yes</option>
-                            </div>
-                        </div>
-                    </select>
-                </div>
-                <div class="col">
-                    Explain Plan:
-                </div>
-                <div class="col">
-                    <select id="explainPlan" name="explainPlan" class="input">
-                        <div th:switch="${explainPlan}">
-                            <div th:case="'N'">
-                                <option value="N" selected="selected">No</option>
-                                <option value="Y">Yes</option>
-                            </div>
-                            <div th:case="'Y'">
-                                <option value="N">No</option>
-                                <option value="Y" selected="selected">Yes</option>
-                            </div>
-                        </div>
-                    </select>
-                </div>
-            </div>
+<div class="bs-example query-toolbar">
+    <form th:action="@{/query}" method="post" class="form query-form">
+        <div class="query-actions">
+            <a class="user-badge"
+               th:href="@{/query(action=commit)}"
+               title="Commit Current Transaction">Commit</a>
+            <a class="user-badge"
+               th:href="@{/query(action=rollback)}"
+               title="Rollback Current Transaction">Rollback</a>
+            <a class="user-badge"
+               th:href="@{/history}"
+               title="View Successful Command History">History</a>
         </div>
-        <div class="form-group">
-            <div class="col">
-                <span>Run SQL query, DML or DDL into the query window below</span>
-            </div>
+
+        <div class="query-options-row">
+            <label class="query-option">
+                <span class="query-options-label">Query Count</span>
+                <select id="queryCount" name="queryCount" class="input">
+                    <option value="N" th:selected="${queryCount != 'Y'}">No</option>
+                    <option value="Y" th:selected="${queryCount == 'Y'}">Yes</option>
+                </select>
+            </label>
+            <label class="query-option">
+                <span class="query-options-label">Elapsed Time</span>
+                <select id="elapsedTime" name="elapsedTime" class="input">
+                    <option value="N" th:selected="${elapsedTime != 'Y'}">No</option>
+                    <option value="Y" th:selected="${elapsedTime == 'Y'}">Yes</option>
+                </select>
+            </label>
+            <label class="query-option">
+                <span class="query-options-label">Explain Plan</span>
+                <select id="explainPlan" name="explainPlan" class="input">
+                    <option value="N" th:selected="${explainPlan != 'Y'}">No</option>
+                    <option value="Y" th:selected="${explainPlan == 'Y'}">Yes</option>
+                </select>
+            </label>
         </div>
-        <div class="form-group">
-            <div class="col">
-                <textarea class="input" id="query" style="height: 300px; width: 100%; resize: both" name="query" cols="40" rows="8" th:inline="text">[[${query}]]</textarea>
-            </div>
+
+        <p class="query-help-text">Run SQL query, DML or DDL into the query window below</p>
+
+        <div class="query-editor-group">
+            <textarea class="input" id="query" style="height: 300px; width: 100%; resize: both" name="query" cols="40" rows="8" th:inline="text">[[${query}]]</textarea>
         </div>
-        <div class="form-group">
-            <div class="col">
-                <button type="submit" class="btn btn-primary">
-                     Execute
-                </button>
-                <button type="reset" class="btn btn-primary">Reset</button>
-            </div>
+
+        <div class="query-form-actions">
+            <button type="submit" class="user-badge">Execute</button>
+            <button type="reset" class="user-badge">Reset</button>
         </div>
     </form>
 </div>
@@ -249,61 +179,68 @@
     </div>
 </div>
 
-<div class="col" th:if="${queryResults != null}">
-    <div class="bs-example">
-        <div class="alert alert-success fade in">
-            <a href="#" class="close">&times;</a>
-            <div>
-                <b>MySQL*Web&gt;</b> <span th:text="${querysql}" />
-            </div>
-            <div th:if="${queryResultCount != null}">
-                <strong>Success!</strong> Query completed successfully - Total of <span th:text="${queryResultCount}" /> row(s)
-            </div>
-            <div th:if="${queryResultCount == null}">
-                <strong>Success!</strong> Query completed successfully
-            </div>
-            <div>
-                <a th:href="@{/query(query=${querysql},action='export')}">
-                    <img src="images/b_save.png"
-                         th:src="@{images/b_save.png}"
-                         alt="Export Data to CSV"
-                         width="16" height="16"
-                         border="0"/> <span style="color: black"> Save as CSV</span>
-                </a> &nbsp;
-                <a th:href="@{/query(query=${querysql},action='export_json')}">
-                    <img src="images/b_save.png"
-                         th:src="@{images/b_save.png}"
-                         alt="Export Data to JSON"
-                         width="16" height="16"
-                         border="0"/> <span style="color: black"> Save as JSON</span>
-                </a> &nbsp;
-            </div>
-            <div th:if="${elapsedTimeResult != null}">
-                Elapsed Time <span th:text="${elapsedTimeResult}" /> second(s)
-            </div>
+<div class="bs-example tables-page-main" th:if="${queryResults != null}">
+    <div class="alert alert-success fade in">
+        <a href="#" class="close">&times;</a>
+        <div>
+            <b>MySQL*Web&gt;</b> <span th:text="${querysql}" />
+        </div>
+        <div th:if="${queryResultCount != null}">
+            <strong>Success!</strong> Query completed successfully - Total of <span th:text="${queryResultCount}" /> row(s)
+        </div>
+        <div th:if="${queryResultCount == null}">
+            <strong>Success!</strong> Query completed successfully
+        </div>
+        <div>
+            <a th:href="@{/query(query=${querysql},action='export')}">
+                <img src="images/b_save.png"
+                     th:src="@{images/b_save.png}"
+                     alt="Export Data to CSV"
+                     width="16" height="16"
+                     border="0"/> Save as CSV
+            </a>
+            <a th:href="@{/query(query=${querysql},action='export_json')}">
+                <img src="images/b_save.png"
+                     th:src="@{images/b_save.png}"
+                     alt="Export Data to JSON"
+                     width="16" height="16"
+                     border="0"/> Save as JSON
+            </a>
+        </div>
+        <div th:if="${elapsedTimeResult != null}">
+            Elapsed Time <span th:text="${elapsedTimeResult}" /> second(s)
         </div>
     </div>
-    <table id="datatable-mysql" class="table">
-        <thead>
-        <div th:each="columnName : ${queryResults.columnNames}">
-            <th style="text-align:center"><span th:text="${columnName}"/></th>
-        </div>
-        </thead>
-        <tbody>
-        <div th:each="rows : ${queryResults.rows}">
-            <tr>
-                <div th:each="columnName : ${queryResults.columnNames}">
-                    <td style="text-align:center"><span th:text="${rows.get(columnName)}"/></td>
-                </div>
-            </tr>
-        </div>
-        </tbody>
-    </table>
-    <br />
+    <div class="form tables-search-form">
+        <div id="table-controls-host" class="table-controls-host"></div>
+    </div>
 </div>
 
-<div class="col" th:if="${sqlResultMap != null}">
-    <h3>SQL Worksheet Results</h3>
+<div class="bs-example tables-results" th:if="${queryResults != null}">
+    <div class="table-wrapper">
+        <table id="datatable-mysql"
+               data-interactive-table
+               data-controls-host="#table-controls-host"
+               class="table variables-main-table">
+            <thead>
+            <tr>
+                <th th:each="columnName : ${queryResults.columnNames}"
+                    style="text-align:center"
+                    th:text="${columnName}"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="rows : ${queryResults.rows}">
+                <td th:each="columnName : ${queryResults.columnNames}"
+                    style="text-align:center"
+                    th:text="${rows.get(columnName)}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="bs-example" th:if="${sqlResultMap != null}">
     <div class="alert alert-warning fade in">
         <a href="#" class="close">&times;</a>
         <strong>Note!</strong> Ran <b th:text="${statementsExecuted}"></b> Statement(s)
@@ -325,34 +262,35 @@
                              th:src="@{images/b_save.png}"
                              alt="Export Data to CSV"
                              width="16" height="16"
-                             border="0"/> <span style="color: black">Save as CSV </span>
-                    </a> &nbsp;
+                             border="0"/> Save as CSV
+                    </a>
                     <a th:href="@{/query(query=${item.value[0]},action='export_json')}">
                         <img src="images/b_save.png"
                              th:src="@{images/b_save.png}"
                              alt="Export Data to JSON"
                              width="16" height="16"
-                             border="0"/> <span style="color: black">Save as JSON </span>
-                    </a> &nbsp;
+                             border="0"/> Save as JSON
+                    </a>
                 </div>
             </div>
-            <table class="table">
-                <thead>
-                    <div th:each="columnName : ${item.value[1].columnNames}">
-                        <th style="text-align:center"><span th:text="${columnName}"/></th>
-                    </div>
-                </thead>
-                <tbody>
-                <div th:each="rows : ${item.value[1].rows}">
+            <div class="table-wrapper tables-results">
+                <table data-interactive-table class="table variables-main-table">
+                    <thead>
                     <tr>
-                        <div th:each="columnName : ${item.value[1].columnNames}">
-                            <td style="text-align:center"><span th:text="${rows.get(columnName)}"/></td>
-                        </div>
+                        <th th:each="columnName : ${item.value[1].columnNames}"
+                            style="text-align:center"
+                            th:text="${columnName}"></th>
                     </tr>
-                </div>
-                </tbody>
-            </table>
-            <br />
+                    </thead>
+                    <tbody>
+                    <tr th:each="rows : ${item.value[1].rows}">
+                        <td th:each="columnName : ${item.value[1].columnNames}"
+                            style="text-align:center"
+                            th:text="${rows.get(columnName)}"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div th:if="!${#strings.contains(item.key, 'SELECT')}">
                 <div th:if="${#strings.contains(item.value.message, 'ERROR:')}">
@@ -379,11 +317,6 @@
                 </div>
         </div>
     </div>
-</div>
-
-
-
-<div class="clearfix">
 </div>
 
 <div th:include="footer :: copy"></div>

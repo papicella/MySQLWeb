@@ -10,29 +10,8 @@
     <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
     <script th:src="@{js/navbar.js}" type="text/javascript"></script>
 
-    <!-- Latest compiled and minified JavaScript -->
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-
-    <script type="text/javascript" src="https://cdn.datatables.net/r/bs-3.3.5/jqc-1.11.3,dt-1.10.8/datatables.min.js"></script>
-
-    <link href="https://cdn.datatables.net/plug-ins/1.10.7/integration/bootstrap/3/dataTables.bootstrap.css" rel="stylesheet" />
-    <script src="https://cdn.datatables.net/1.10.7/js/jquery.dataTables.min.js"></script>
-
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
-
-    <script type="text/javascript" charset="utf-8">
-        $(document).ready(function() {
-            var table = $('#datatable-mysql').DataTable({
-                autoWidth: false,
-                scrollX: false
-            });
-            table.columns.adjust().draw();
-            $('#datatable-mysql').css('width', '100%');
-            $('#datatable-mysql_wrapper').css('width', '100%');
-        } );
-    </script>
+    <script th:src="@{js/interactive-table.js}" type="text/javascript"></script>
 
     <script type="text/javascript">
         // <![CDATA[
@@ -42,10 +21,8 @@
         // ]]>
     </script>
 
-    <style>
-    </style>
 </head>
-<body>
+<body class="page-compact">
 
 <div th:replace="navbar :: bar(false)"></div>
 <div class="bs-example">
@@ -55,151 +32,36 @@
 </div>
 
 <div th:replace="nav-tabs :: tabs('indexes')"></div>
-<div class="bs-example" th:if="${result != null}">
-    <br />
-    <div class="col">
-        <div th:if="${#strings.contains(result.message, 'ERROR:')}">
-            <div class="alert alert-danger fade in">
-                <a href="#" class="close">&times;</a>
-                <div>
-                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
-                </div>
-            </div>
-            <table class="table">
-                <tr class="info">
-                    <td th:text="${result.message}" style="text-align:left} " ></td>
-                </tr>
-            </table>
-        </div>
-        <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
-            <div class="alert alert-success fade in">
-                <a href="#" class="close">&times;</a>
-                <div>
-                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="bs-example" th:if="${arrayresult != null}">
-    <br />
-    <div class="col">
-        <div th:each="result : ${arrayresult}">
-            <div th:if="${#strings.contains(result.message, 'ERROR:')}">
-                <div class="alert alert-danger fade in">
-                    <a href="#" class="close">&times;</a>
-                    <div>
-                        <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
-                    </div>
-                </div>
-                <table class="table">
-                    <tr class="info">
-                        <td style="text-align: right">Message:</td>
-                        <td th:text="${result.message}" style="text-align:left} " ></td>
-                    </tr>
-                </table>
-            </div>
-            <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
-                <div class="alert alert-success fade in">
-                    <a href="#" class="close">&times;</a>
-                    <div>
-                        <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="col">
-    <div class="panel-group" id="accordion" th:if="${indexStructure != null}">
-        <br />
-        <div class="panel">
-            <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a data-parent="#accordion" href="#collapseOne">
-                        <span th:text="${indexname}" /> Index Details
-                    </a>
-                </h4>
-            </div>
-            <div id="collapseOne" class="panel-collapse collapse in">
-                <div class="panel-body">
-                    <table class="table table-hover table-bordered table-condensed">
-                        <thead>
-                        <th style="text-align:center">Column</th>
-                        <th style="text-align:center">Data</th>
-                        </thead>
-                        <tbody>
-                        <div th:each="rows : ${indexStructure.rows}">
-                            <div th:each="columnName : ${indexStructure.columnNames}">
-                                <tr>
-                                    <td style="text-align:right"><span th:text="${columnName}"/></td>
-                                    <td style="text-align:left"><span th:text="${rows.get(columnName)}"/></td>
-                                </tr>
-                            </div>
-                        </div>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="clearfix">
-</div>
-
-<div class="bs-example">
-    <br />
-    <form th:action="@{/indexes}" method="post" class="form">
-        <div class="form-group ">
-            <div class="col">
-                <input type="text" id="search" name="search" placeholder="Index Name" class="input" />
-            </div>
-            <div class="col">
-                <select id="selectedSchema" name="selectedSchema" class="input">
-                    <table>
-                        <tr th:each="schema : ${schemas}">
-                            <div th:if="${schema == chosenSchema}">
-                                <option th:value="${schema}" selected="selected">
-                                    <span th:text="${schema}" />
-                                </option>
-                            </div>
-                            <div th:if="${schema != chosenSchema}">
-                                <option th:value="${schema}">
-                                    <span th:text="${schema}" />
-                                </option>
-                            </div>
-                        </tr>
-                    </table>
-                </select>
-            </div>
-            <div class="col">
-                <button type="submit" class="user-badge" name="searchpressed" value="searchpressed">Search</button>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div class="bs-example" th:if="${estimatedrecords == 0}">
-    <div class="alert alert-info fade in">
-        <a href="#" class="close">&times;</a>
-        <strong>Info!</strong> Found 0 Indexes
-    </div>
-</div>
-
-<!-- Add table with Results only if results exist -->
-<div class="bs-example tables-results" th:if="${estimatedrecords > 0}">
-    <div class="alert alert-success fade in">
+<div class="bs-example tables-page-main">
+    <div class="alert alert-success fade in" th:if="${estimatedrecords != null and estimatedrecords > 0}">
         <a href="#" class="close">&times;</a>
         <strong>Success!</strong> Found <b th:text="${estimatedrecords}"></b> Index(es)
     </div>
+    <div class="alert alert-info fade in" th:if="${estimatedrecords != null and estimatedrecords == 0}">
+        <a href="#" class="close">&times;</a>
+        <strong>Info!</strong> Found 0 Indexes
+    </div>
+    <form th:action="@{/indexes}" method="post" class="form tables-search-form">
+        <input type="text" id="search" name="search" placeholder="Index Name" class="input tables-search-input" />
+        <select id="selectedSchema" name="selectedSchema" class="input tables-search-schema">
+            <option th:each="schema : ${schemas}"
+                    th:value="${schema}"
+                    th:text="${schema}"
+                    th:selected="${schema == chosenSchema}"></option>
+        </select>
+        <button type="submit" class="user-badge tables-search-button" name="searchpressed" value="searchpressed">Search</button>
+        <div id="table-controls-host" class="table-controls-host"></div>
+    </form>
+</div>
+
+<div class="bs-example tables-results" th:if="${estimatedrecords > 0}">
     <div class="table-wrapper">
         <form th:action="@{/indexes}" method="post" name="tablesForm" id="tablesForm">
             <input type="hidden" name="selectedSchema" th:value="${chosenSchema}" />
-            <table id="datatable-mysql" class="table tables-main-table indexes-main-table">
-                <caption class="tables-caption"><b>Indexes</b></caption>
+            <table id="datatable-mysql"
+                   data-controls-host="#table-controls-host"
+                   class="table tables-main-table indexes-main-table">
                 <thead>
                 <tr>
                     <th style="text-align:center"></th>
@@ -241,8 +103,93 @@
     </div>
 </div>
 
+<div class="bs-example" th:if="${result != null}">
+    <div class="col">
+        <div th:if="${#strings.contains(result.message, 'ERROR:')}">
+            <div class="alert alert-danger fade in">
+                <a href="#" class="close">&times;</a>
+                <div>
+                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                </div>
+            </div>
+            <table class="table">
+                <tr class="info">
+                    <td th:text="${result.message}" style="text-align:left} " ></td>
+                </tr>
+            </table>
+        </div>
+        <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
+            <div class="alert alert-success fade in">
+                <a href="#" class="close">&times;</a>
+                <div>
+                    <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-<div class="clearfix">
+<div class="bs-example" th:if="${arrayresult != null}">
+    <div class="col">
+        <div th:each="result : ${arrayresult}">
+            <div th:if="${#strings.contains(result.message, 'ERROR:')}">
+                <div class="alert alert-danger fade in">
+                    <a href="#" class="close">&times;</a>
+                    <div>
+                        <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                    </div>
+                </div>
+                <table class="table">
+                    <tr class="info">
+                        <td style="text-align: right">Message:</td>
+                        <td th:text="${result.message}" style="text-align:left} " ></td>
+                    </tr>
+                </table>
+            </div>
+            <div th:if="!${#strings.contains(result.message, 'ERROR:')}">
+                <div class="alert alert-success fade in">
+                    <a href="#" class="close">&times;</a>
+                    <div>
+                        <b>MySQL*Web&gt;</b> <span th:text="${result.command}" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="col">
+    <div class="panel-group" id="accordion" th:if="${indexStructure != null}">
+        <div class="panel">
+            <div class="panel-heading">
+                <h4 class="panel-title">
+                    <a data-parent="#accordion" href="#collapseOne">
+                        <span th:text="${indexname}" /> Index Details
+                    </a>
+                </h4>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse in">
+                <div class="panel-body">
+                    <table class="table table-hover table-bordered table-condensed">
+                        <thead>
+                        <th style="text-align:center">Column</th>
+                        <th style="text-align:center">Data</th>
+                        </thead>
+                        <tbody>
+                        <div th:each="rows : ${indexStructure.rows}">
+                            <div th:each="columnName : ${indexStructure.columnNames}">
+                                <tr>
+                                    <td style="text-align:right"><span th:text="${columnName}"/></td>
+                                    <td style="text-align:left"><span th:text="${rows.get(columnName)}"/></td>
+                                </tr>
+                            </div>
+                        </div>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <div th:include="footer :: copy"></div>
