@@ -24,7 +24,7 @@ public class HistoryController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 

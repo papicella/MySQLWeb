@@ -5,12 +5,12 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import com.pas.tools.mysqlweb.beans.WebResult;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.Constants;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class HomeController
 {
+    @Autowired
+    GenericDAO genericDAO;
+
     @GetMapping(value = "/home")
     public String login(Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
     {
@@ -27,11 +30,10 @@ public class HomeController
 
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
         WebResult databaseList;
 
         databaseList = genericDAO.runGenericQuery

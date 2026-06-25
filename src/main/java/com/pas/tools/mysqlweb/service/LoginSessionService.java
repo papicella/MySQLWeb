@@ -3,13 +3,10 @@ package com.pas.tools.mysqlweb.service;
 import com.pas.tools.mysqlweb.beans.Login;
 import com.pas.tools.mysqlweb.beans.UserPref;
 import com.pas.tools.mysqlweb.beans.WebResult;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.Constants;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
-import com.pas.tools.mysqlweb.utils.AdminUtil;
-import com.pas.tools.mysqlweb.utils.ConnectionManager;
-import com.pas.tools.mysqlweb.utils.MysqlConnection;
 import com.pas.tools.mysqlweb.utils.Themes;
+import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +25,12 @@ public class LoginSessionService
     @Autowired
     UserPref userPref;
 
+    @Autowired
+    SessionConnectionRegistry sessionConnectionRegistry;
+
+    @Autowired
+    GenericDAO genericDAO;
+
     public Login defaultLogin()
     {
         return new Login("", "", DEFAULT_JDBC_URL, "apples");
@@ -45,21 +48,18 @@ public class LoginSessionService
             String url,
             HttpSession session) throws Exception
     {
-        ConnectionManager cm = ConnectionManager.getInstance();
         String sessionId = session.getId();
         String connectedAt = new Date().toString();
         String dbUsername = resolveDbUsername(username);
         String dbPassword = resolveDbPassword(username, password);
         String displayUser = resolveDisplayUser(username);
 
-        cm.addConnection(new MysqlConnection(url, connectedAt, displayUser), sessionId);
-        cm.addDataSourceConnection(
-                AdminUtil.newSingleConnectionDataSource(url, dbUsername, dbPassword),
-                sessionId);
+        sessionConnectionRegistry.register(
+                sessionId, url, dbUsername, dbPassword, displayUser, connectedAt);
 
         String schema = url.substring(url.lastIndexOf('/') + 1);
 
-        session.setAttribute("user_key", sessionId);
+        session.setAttribute(Utils.SESSION_CONNECTION_ID, sessionId);
         session.setAttribute("user", displayUser);
         session.setAttribute("schema", schema);
         session.setAttribute("url", url);
@@ -68,7 +68,6 @@ public class LoginSessionService
         session.setAttribute("connectedAt", connectedAt);
         applyDefaultTheme(session);
 
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
         Map<String, Long> schemaMap = genericDAO.populateSchemaMap(schema, sessionId);
         log.info("schemaMap={}", schemaMap);
         session.setAttribute("schemaMap", schemaMap);

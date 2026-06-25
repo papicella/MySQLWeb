@@ -1,49 +1,75 @@
 package com.pas.tools.mysqlweb.utils;
 
+import com.pas.tools.mysqlweb.service.SessionConnectionRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.SingleConnectionDataSource;
+import org.springframework.stereotype.Component;
 
 import java.sql.Connection;
 
+@Component
 public class AdminUtil
 {
+    private static SessionConnectionRegistry sessionConnectionRegistry;
 
-    static public SingleConnectionDataSource newSingleConnectionDataSource
-            (String url,
-             String username,
-             String passwd)
+    @Autowired
+    public AdminUtil(SessionConnectionRegistry sessionConnectionRegistry)
     {
-        SingleConnectionDataSource ds = new SingleConnectionDataSource();
+        AdminUtil.sessionConnectionRegistry = sessionConnectionRegistry;
+    }
 
-        //ds.setDriverClassName("com.mysql.jdbc.Driver");
-        ds.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        ds.setUrl(url);
+    public static Connection getConnection(String sessionId) throws Exception
+    {
+        requireRegistry();
+        Connection connection = sessionConnectionRegistry.getConnection(sessionId);
+        if (connection == null)
+        {
+            throw new Exception("No JDBC connection registered for session " + sessionId);
+        }
+        return connection;
+    }
+
+    public static javax.sql.DataSource getDataSource(String sessionId) throws Exception
+    {
+        requireRegistry();
+        javax.sql.DataSource dataSource = sessionConnectionRegistry.getDataSource(sessionId);
+        if (dataSource == null)
+        {
+            throw new Exception("No JDBC connection registered for session " + sessionId);
+        }
+        return dataSource;
+    }
+
+    /** @deprecated Use {@link SessionConnectionRegistry#register} instead. */
+    @Deprecated
+    public static SingleConnectionDataSource newSingleConnectionDataSource(
+            String url,
+            String username,
+            String password)
+    {
+        SingleConnectionDataSource dataSource = new SingleConnectionDataSource();
+        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
+        dataSource.setUrl(url);
 
         if (username != null)
-            ds.setUsername(username);
+        {
+            dataSource.setUsername(username);
+        }
 
-        if (passwd != null)
-            ds.setPassword(passwd);
+        if (password != null)
+        {
+            dataSource.setPassword(password);
+        }
 
-        return ds;
+        dataSource.setSuppressClose(true);
+        return dataSource;
     }
 
-
-    /*
-     * Get connection from ConnectionManager conList Map
-     */
-    static public Connection getConnection(String userKey) throws Exception
+    private static void requireRegistry()
     {
-        ConnectionManager cm = ConnectionManager.getInstance();
-        return cm.getDataSource(userKey).getConnection();
+        if (sessionConnectionRegistry == null)
+        {
+            throw new IllegalStateException("SessionConnectionRegistry is not initialized");
+        }
     }
-
-    /*
-     * Get DataSource from ConnectionManager conList Map
-     */
-    static public javax.sql.DataSource getDataSource(String userKey) throws Exception
-    {
-        ConnectionManager cm = ConnectionManager.getInstance();
-        return cm.getDataSource(userKey);
-    }
-
 }

@@ -1,13 +1,11 @@
 package com.pas.tools.mysqlweb.dao.views;
 
 import com.pas.tools.mysqlweb.beans.Result;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.main.PivotalMySQLWebException;
-import com.pas.tools.mysqlweb.utils.AdminUtil;
+import com.pas.tools.mysqlweb.service.SessionJdbcSupport;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.SingleConnectionDataSource;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -16,93 +14,69 @@ import java.util.List;
 @Repository
 public class ViewDAOImpl implements ViewDAO
 {
-    private JdbcTemplate jdbcTemplate;
+    private final SessionJdbcSupport jdbcSupport;
+    private final GenericDAO genericDAO;
 
-    public void setDataSource(javax.sql.DataSource ds) {
-        this.jdbcTemplate = new JdbcTemplate(ds);
+    public ViewDAOImpl(SessionJdbcSupport jdbcSupport, GenericDAO genericDAO)
+    {
+        this.jdbcSupport = jdbcSupport;
+        this.genericDAO = genericDAO;
     }
 
     @Override
-    public List<View> retrieveViewList(String schema, String search, String userKey) throws PivotalMySQLWebException
+    public List<View> retrieveViewList(String schema, String search, String sessionId)
+            throws PivotalMySQLWebException
     {
-        List<View> views;
-        String srch;
-
-        javax.sql.DataSource dataSource = null;
-
         try
         {
-            dataSource = AdminUtil.getDataSource(userKey);
-            setDataSource(dataSource);
-
-            if (search == null)
-                srch = "%";
-            else
-                srch = "%" + search + "%";
-
-            views = jdbcTemplate.query(Constants.USER_VIEWS, new Object[]{schema, srch}, new ViewMapper());
-
+            JdbcTemplate jdbcTemplate = jdbcSupport.getJdbcTemplate(sessionId);
+            String srch = search == null ? "%" : "%" + search + "%";
+            return jdbcTemplate.query(Constants.USER_VIEWS, new Object[]{schema, srch}, new ViewMapper());
         }
         catch (Exception ex)
         {
             log.info("Error retrieving all views with search string = " + search);
             throw new PivotalMySQLWebException(ex);
         }
-
-        return views;
     }
 
     @Override
-    public Result simpleviewCommand(String schemaName, String viewName, String type, String userKey) throws PivotalMySQLWebException
+    public Result simpleviewCommand(String schemaName, String viewName, String type, String sessionId)
+            throws PivotalMySQLWebException
     {
-        String            command = null;
-        Result            res     = new Result();
-        SingleConnectionDataSource dataSource = null;
+        String command = null;
 
-        if (type != null)
+        if (type != null && type.equalsIgnoreCase("DROP"))
         {
-            if (type.equalsIgnoreCase("DROP"))
+            if (schemaName.equalsIgnoreCase("public"))
             {
-                if (schemaName.equalsIgnoreCase("public"))
-                {
-                    command = String.format(Constants.DROP_VIEW_PUBLIC, viewName);
-                }
-                else
-                {
-                    command = String.format(Constants.DROP_VIEW, schemaName, viewName);
-                }
+                command = String.format(Constants.DROP_VIEW_PUBLIC, viewName);
+            }
+            else
+            {
+                command = String.format(Constants.DROP_VIEW, schemaName, viewName);
             }
         }
 
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-        res = genericDAO.runCommand(command, userKey);
-
-        return res;
+        return genericDAO.runCommand(command, sessionId);
     }
 
     @Override
-    public String getViewDefinition(String schemaName, String viewName, String userKey) throws PivotalMySQLWebException
+    public String getViewDefinition(String schemaName, String viewName, String sessionId)
+            throws PivotalMySQLWebException
     {
-        String            def;
-        javax.sql.DataSource dataSource;
-
         try
         {
-            dataSource = AdminUtil.getDataSource(userKey);
-            setDataSource(dataSource);
-
-            def = jdbcTemplate.queryForObject
-                    (Constants.USER_VIEW_DEF, new Object[]{schemaName, viewName}, String.class);
-
+            JdbcTemplate jdbcTemplate = jdbcSupport.getJdbcTemplate(sessionId);
+            return jdbcTemplate.queryForObject(
+                    Constants.USER_VIEW_DEF,
+                    new Object[]{schemaName, viewName},
+                    String.class);
         }
         catch (Exception ex)
         {
             log.info("Error retrieving view definition for view = " + viewName);
             throw new PivotalMySQLWebException(ex);
         }
-
-        return def;
-
     }
-
 }

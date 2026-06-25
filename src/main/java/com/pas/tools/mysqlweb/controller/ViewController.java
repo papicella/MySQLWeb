@@ -1,12 +1,12 @@
 package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Result;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.dao.views.View;
 import com.pas.tools.mysqlweb.dao.views.ViewDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,23 +24,25 @@ import java.util.List;
 @Controller
 public class ViewController
 {
-    
+    @Autowired
+    ViewDAO viewDAO;
+
+    @Autowired
+    GenericDAO genericDAO;
+
     @GetMapping(value = "/views")
     public String showViews
             (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         String schema = null;
 
         log.info("Received request to show views");
-
-        ViewDAO viewDAO = PivotalMySQLWebDAOFactory.getViewDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         Result result = new Result();
 
@@ -69,7 +71,7 @@ public class ViewController
                         viewDAO.getViewDefinition
                                 (schema,
                                         (String)request.getParameter("viewName"),
-                                        (String)session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
 
                 model.addAttribute("viewName", (String)request.getParameter("viewName"));
                 model.addAttribute("viewdef", def);
@@ -82,7 +84,7 @@ public class ViewController
                                 (schema,
                                         (String)request.getParameter("viewName"),
                                         viewAction,
-                                        (String)session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
 
                 model.addAttribute("result", result);
 
@@ -93,7 +95,7 @@ public class ViewController
                         session.setAttribute("schemaMap",
                                         genericDAO.populateSchemaMap
                                                 ((String)session.getAttribute("schema"),
-                                                (String)session.getAttribute("user_key")));
+                                                Utils.getConnectionSessionId(session)));
                     }
                 }
             }
@@ -102,14 +104,14 @@ public class ViewController
         List<View> views = viewDAO.retrieveViewList
                 (schema,
                         null,
-                        (String)session.getAttribute("user_key"));
+                        Utils.getConnectionSessionId(session));
 
         model.addAttribute("records", views.size());
         model.addAttribute("estimatedrecords", views.size());
         model.addAttribute("views", views);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 
@@ -124,7 +126,7 @@ public class ViewController
 
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -147,15 +149,12 @@ public class ViewController
 
         log.info("schema = " + schema);
 
-        ViewDAO viewDAO = PivotalMySQLWebDAOFactory.getViewDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
         if (request.getParameter("searchpressed") != null)
         {
             views = viewDAO.retrieveViewList
                     (schema,
                             (String)request.getParameter("search"),
-                            (String)session.getAttribute("user_key"));
+                            Utils.getConnectionSessionId(session));
 
             model.addAttribute("search", (String)request.getParameter("search"));
         }
@@ -180,7 +179,7 @@ public class ViewController
                                     (schema,
                                             view,
                                             commandStr,
-                                            (String)session.getAttribute("user_key"));
+                                            Utils.getConnectionSessionId(session));
                     al.add(result);
                 }
 
@@ -190,7 +189,7 @@ public class ViewController
             views = viewDAO.retrieveViewList
                     (schema,
                             null,
-                            (String)session.getAttribute("user_key"));
+                            Utils.getConnectionSessionId(session));
 
         }
 
@@ -198,7 +197,7 @@ public class ViewController
         model.addAttribute("estimatedrecords", views.size());
         model.addAttribute("views", views);
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 

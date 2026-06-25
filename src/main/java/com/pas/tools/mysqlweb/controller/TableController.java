@@ -2,12 +2,12 @@ package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Result;
 import com.pas.tools.mysqlweb.beans.WebResult;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.dao.tables.Table;
 import com.pas.tools.mysqlweb.dao.tables.TableDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +25,12 @@ import java.util.List;
 @Controller
 public class TableController
 {
+    @Autowired
+    TableDAO tableDAO;
+
+    @Autowired
+    GenericDAO genericDAO;
+
     @GetMapping(value = "/tables")
     public String showTables
             (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
@@ -32,7 +38,7 @@ public class TableController
 
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -40,9 +46,6 @@ public class TableController
         WebResult tableStructure, tableDetails, tableIndexes;
 
         log.info("Received request to show tables");
-
-        TableDAO tableDAO = PivotalMySQLWebDAOFactory.getTableDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -73,7 +76,7 @@ public class TableController
                         tableDAO.getTableStructure
                                 (schema,
                                         (String)request.getParameter("tabName"),
-                                        (String)session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
 
 
                 model.addAttribute("tableStructure", tableStructure);
@@ -85,7 +88,7 @@ public class TableController
                         tableDAO.getTableDetails
                                 (schema,
                                         (String)request.getParameter("tabName"),
-                                        (String)session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
 
 
                 model.addAttribute("tableDetails", tableDetails);
@@ -95,7 +98,7 @@ public class TableController
             {
                 String ddl = tableDAO.runShowQuery(schema,
                                                    (String)request.getParameter("tabName"),
-                                                   (String)session.getAttribute("user_key"));
+                                                   Utils.getConnectionSessionId(session));
 
                 model.addAttribute("tableDDL", ddl.trim());
                 model.addAttribute("tablename", (String)request.getParameter("tabName"));
@@ -104,7 +107,7 @@ public class TableController
             {
                 tableIndexes = tableDAO.showIndexes(schema,
                         (String)request.getParameter("tabName"),
-                        (String)session.getAttribute("user_key"));
+                        Utils.getConnectionSessionId(session));
 
                 model.addAttribute("tableIndexes", tableIndexes);
                 model.addAttribute("tablename", (String)request.getParameter("tabName"));
@@ -116,7 +119,7 @@ public class TableController
                                 (schema,
                                         (String)request.getParameter("tabName"),
                                         tabAction,
-                                        (String)session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
                 model.addAttribute("result", result);
 
                 if (result.getMessage().startsWith("SUCCESS"))
@@ -126,14 +129,14 @@ public class TableController
                         session.setAttribute("schemaMap",
                                              genericDAO.populateSchemaMap
                                                ((String)session.getAttribute("schema"),
-                                                (String)session.getAttribute("user_key")));
+                                                Utils.getConnectionSessionId(session)));
                     }
                 }
             }
         }
 
         List<Table> tbls = tableDAO.retrieveTableList
-                  (schema, null, (String)session.getAttribute("user_key"));
+                  (schema, null, Utils.getConnectionSessionId(session));
 
         model.addAttribute("records", tbls.size());
         model.addAttribute("estimatedrecords", tbls.size());
@@ -141,7 +144,7 @@ public class TableController
 
         model.addAttribute
                 ("schemas",
-                 genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                 genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 
@@ -154,7 +157,7 @@ public class TableController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -163,9 +166,6 @@ public class TableController
         List<Table> tbls = null;
 
         log.info("Received request to perform an action on the tables");
-
-        TableDAO tableDAO = PivotalMySQLWebDAOFactory.getTableDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -186,7 +186,7 @@ public class TableController
             tbls = tableDAO.retrieveTableList
                             (schema,
                             (String)request.getParameter("search"),
-                            (String)session.getAttribute("user_key"));
+                            Utils.getConnectionSessionId(session));
 
             model.addAttribute("search", (String)request.getParameter("search"));
         }
@@ -210,7 +210,7 @@ public class TableController
                             (schema,
                                     table,
                                     commandStr,
-                                    (String)session.getAttribute("user_key"));
+                                    Utils.getConnectionSessionId(session));
 
                     al.add(result);
                 }
@@ -219,7 +219,7 @@ public class TableController
             }
 
             tbls = tableDAO.retrieveTableList
-                            (schema, null, (String)session.getAttribute("user_key"));
+                            (schema, null, Utils.getConnectionSessionId(session));
         }
 
         model.addAttribute("records", tbls.size());
@@ -227,7 +227,7 @@ public class TableController
         model.addAttribute("tables", tbls);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 

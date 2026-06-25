@@ -1,9 +1,9 @@
 package com.pas.tools.mysqlweb.controller;
 
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +18,8 @@ import java.util.Map;
 @Controller
 public class RefreshController
 {
+    @Autowired
+    GenericDAO genericDAO;
 
     @GetMapping(value = "/refresh")
     public String refreshPage
@@ -25,17 +27,15 @@ public class RefreshController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         log.info("Received request refresh schema object list");
 
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
         Map<String, Long> schemaMap;
         schemaMap = genericDAO.populateSchemaMap((String)session.getAttribute("schema"),
-                                                 (String)session.getAttribute("user_key"));
+                                                 Utils.getConnectionSessionId(session));
 
         log.info("schemaMap=" + schemaMap);
         session.setAttribute("schemaMap", schemaMap);

@@ -8,17 +8,15 @@ import java.util.List;
 
 public interface TableDAO
 {
-    public void setDataSource(javax.sql.DataSource ds);
+    public List<Table> retrieveTableList(String schema, String search, String sessionId) throws PivotalMySQLWebException;
 
-    public List<Table> retrieveTableList(String schema, String search, String userKey) throws PivotalMySQLWebException;
+    public Result simpletableCommand (String schemaName, String tableName, String type, String sessionId) throws PivotalMySQLWebException;
 
-    public Result simpletableCommand (String schemaName, String tableName, String type, String userKey) throws PivotalMySQLWebException;
+    public WebResult getTableStructure (String schema, String tableName, String sessionId) throws PivotalMySQLWebException;
 
-    public WebResult getTableStructure (String schema, String tableName, String userKey) throws PivotalMySQLWebException;
+    public WebResult getTableDetails (String schema, String tableName, String sessionId) throws PivotalMySQLWebException;
 
-    public WebResult getTableDetails (String schema, String tableName, String userKey) throws PivotalMySQLWebException;
+    public String runShowQuery (String schema, String tableName, String sessionId) throws PivotalMySQLWebException;
 
-    public String runShowQuery (String schema, String tableName, String userKey) throws PivotalMySQLWebException;
-
-    public WebResult showIndexes(String schema, String tableName, String userKey) throws PivotalMySQLWebException;
+    public WebResult showIndexes(String schema, String tableName, String sessionId) throws PivotalMySQLWebException;
 }

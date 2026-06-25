@@ -12,6 +12,12 @@ import javax.servlet.http.HttpSession;
 @Slf4j
 public class Utils
 {
+    public static final String SESSION_CONNECTION_ID = "sessionId";
+
+    public static String getConnectionSessionId(HttpSession session)
+    {
+        return (String) session.getAttribute(SESSION_CONNECTION_ID);
+    }
 
     public static String applicationIndex ()
     {
@@ -56,22 +62,17 @@ public class Utils
 
     public static boolean verifyConnection(HttpServletResponse response, HttpSession session) throws Exception
     {
-        if (session.getAttribute("user_key") == null)
+        String sessionId = getConnectionSessionId(session);
+        if (sessionId == null)
         {
             response.sendRedirect("/");
             return true;
         }
 
-        Connection conn = AdminUtil.getConnection((String) session.getAttribute("user_key"));
-        if (conn == null)
-        {
-            response.sendRedirect("/");
-            return true;
-        }
-
+        Connection conn = AdminUtil.getConnection(sessionId);
         if (conn.isClosed() || !conn.isValid(5))
         {
-            log.info("Connection = null OR Connection no longer valid");
+            log.info("Connection is closed or no longer valid for session {}", sessionId);
             response.sendRedirect("/");
             return true;
         }

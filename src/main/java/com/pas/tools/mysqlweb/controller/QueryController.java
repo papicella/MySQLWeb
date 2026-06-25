@@ -3,13 +3,13 @@ package com.pas.tools.mysqlweb.controller;
 import com.pas.tools.mysqlweb.beans.CommandResult;
 import com.pas.tools.mysqlweb.beans.UserPref;
 import com.pas.tools.mysqlweb.beans.WebResult;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.main.PivotalMySQLWebException;
-import com.pas.tools.mysqlweb.utils.ConnectionManager;
+import com.pas.tools.mysqlweb.utils.AdminUtil;
 import com.pas.tools.mysqlweb.utils.QueryUtil;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +32,9 @@ import java.util.regex.Pattern;
 @Controller
 public class QueryController
 {
+    @Autowired
+    GenericDAO genericDAO;
+
     private static final String FILENAME_EXPORT = "query-output.csv";
     private static final String FILENAME_EXPORT_JSON = "query-output.json";
     private static final String SAVE_CONTENT_TYPE = "application/x-download";
@@ -47,32 +50,29 @@ public class QueryController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         log.info("Received request to show query worksheet");
         UserPref userPrefs = (UserPref) session.getAttribute("prefs");
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
         String action = request.getParameter("action");
         if (action != null)
         {
             CommandResult result = new CommandResult();
-            ConnectionManager cm = ConnectionManager.getInstance();
-            Connection conn = cm.getDataSource(session.getId()).getConnection();
+            Connection conn = AdminUtil.getConnection(session.getId());
 
             if (action.trim().equals("commit"))
             {
                 log.info("commit action requested");
-                result = genericDAO.runStatement("commit", "N", "Y", (String)session.getAttribute("user_key"));
+                result = genericDAO.runStatement("commit", "N", "Y", Utils.getConnectionSessionId(session));
                 addCommandToHistory(session, userPrefs, "commit");
                 model.addAttribute("result", result);
             }
             else if (action.trim().equals("rollback"))
             {
                 log.info("rollback action requested");
-                result = genericDAO.runStatement("rollback", "N", "Y", (String)session.getAttribute("user_key"));
+                result = genericDAO.runStatement("rollback", "N", "Y", Utils.getConnectionSessionId(session));
                 addCommandToHistory(session, userPrefs, "rollback");
                 model.addAttribute("result", result);
             }
@@ -128,15 +128,12 @@ public class QueryController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         log.info("Received request to action SQL from query worksheet");
-        ConnectionManager cm = ConnectionManager.getInstance();
-        Connection conn = cm.getDataSource(session.getId()).getConnection();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
+        Connection conn = AdminUtil.getConnection(session.getId());
         UserPref userPrefs = (UserPref) session.getAttribute("prefs");
 
         log.info("Query = [" + query + "]");
@@ -160,7 +157,7 @@ public class QueryController
                             log.info("Need to run explain plan");
 
                             webResult = genericDAO.runGenericQuery
-                                    ("explain " + s, null, (String)session.getAttribute("user_key"), -1);
+                                    ("explain " + s, null, Utils.getConnectionSessionId(session), -1);
                             model.addAttribute("explainresult", webResult);
                             model.addAttribute("query", s);
                         }
@@ -168,7 +165,7 @@ public class QueryController
                         {
                             long start = System.currentTimeMillis();
                             webResult = genericDAO.runGenericQuery
-                                    (s, null, (String)session.getAttribute("user_key"), userPrefs.getMaxRecordsinSQLQueryWindow());
+                                    (s, null, Utils.getConnectionSessionId(session), userPrefs.getMaxRecordsinSQLQueryWindow());
                             long end = System.currentTimeMillis();
 
                             double timeTaken = new Double(end - start).doubleValue();
@@ -203,13 +200,13 @@ public class QueryController
 
                     if (s.length() > 0) {
                         if (determineQueryType(s).equals("COMMIT")) {
-                            result = genericDAO.runStatement("commit", elapsedTime, "Y", (String)session.getAttribute("user_key"));
+                            result = genericDAO.runStatement("commit", elapsedTime, "Y", Utils.getConnectionSessionId(session));
                             model.addAttribute("result", result);
                             if (result.getMessage().startsWith("SUCCESS")) {
                                 addCommandToHistory(session, userPrefs, s);
                             }
                         } else if (determineQueryType(s).equals("ROLLBACK")) {
-                            result = genericDAO.runStatement("rollback", elapsedTime, "Y", (String)session.getAttribute("user_key"));
+                            result = genericDAO.runStatement("rollback", elapsedTime, "Y", Utils.getConnectionSessionId(session));
 
                             model.addAttribute("result", result);
                             if (result.getMessage().startsWith("SUCCESS")) {
@@ -219,7 +216,7 @@ public class QueryController
                         else if (determineQueryType(s).equals("CALL"))
                         {
                             result = genericDAO.runStatement
-                                    (s, elapsedTime, "Y", (String)session.getAttribute("user_key"));
+                                    (s, elapsedTime, "Y", Utils.getConnectionSessionId(session));
                             model.addAttribute("result", result);
                             if (result.getMessage().startsWith("SUCCESS")) {
                                 addCommandToHistory(session, userPrefs, s);
@@ -230,7 +227,7 @@ public class QueryController
                             try
                             {
                                 webResult = genericDAO.runGenericQuery
-                                        (s, null, (String)session.getAttribute("user_key"), -1);
+                                        (s, null, Utils.getConnectionSessionId(session), -1);
                                 model.addAttribute("queryResults", webResult);
                                 model.addAttribute("query", s);
                                 model.addAttribute("querysql", s);
@@ -250,7 +247,7 @@ public class QueryController
                         {
 
                             result = genericDAO.runStatement
-                                    (s, elapsedTime, "N", (String) session.getAttribute("user_key"));
+                                    (s, elapsedTime, "N", Utils.getConnectionSessionId(session));
 
                             model.addAttribute("result", result);
                             if (result.getMessage().startsWith("SUCCESS")) {
@@ -258,7 +255,7 @@ public class QueryController
                                 session.setAttribute("schemaMap",
                                                 genericDAO.populateSchemaMap
                                                         ((String)session.getAttribute("schema"),
-                                                        (String)session.getAttribute("user_key")));
+                                                        Utils.getConnectionSessionId(session)));
                             }
                         }
 
@@ -274,7 +271,7 @@ public class QueryController
                     log.info("Executing create procedure or function now as single query only");
 
                     result = genericDAO.runStatement
-                            (query, elapsedTime, "N", (String) session.getAttribute("user_key"));
+                            (query, elapsedTime, "N", Utils.getConnectionSessionId(session));
 
                     model.addAttribute("result", result);
                     if (result.getMessage().startsWith("SUCCESS")) {
@@ -282,7 +279,7 @@ public class QueryController
                         session.setAttribute("schemaMap",
                                 genericDAO.populateSchemaMap
                                         ((String)session.getAttribute("schema"),
-                                                (String)session.getAttribute("user_key")));
+                                                Utils.getConnectionSessionId(session)));
                     }
                 }
                 else {
@@ -341,13 +338,11 @@ public class QueryController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         log.info("Received request to action a query directly");
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
         UserPref userPrefs = (UserPref) session.getAttribute("prefs");
 
         String query = request.getParameter("query");
@@ -360,7 +355,7 @@ public class QueryController
         try
         {
             WebResult webResult = genericDAO.runGenericQuery
-                    (query, null, (String)session.getAttribute("user_key"), userPrefs.getMaxRecordsinSQLQueryWindow());
+                    (query, null, Utils.getConnectionSessionId(session), userPrefs.getMaxRecordsinSQLQueryWindow());
 
             log.info("Query run");
             model.addAttribute("queryResults", webResult);
@@ -502,8 +497,6 @@ public class QueryController
         boolean ddl = false;
 
         SortedMap<String, Object> queryResults = new TreeMap<String, Object>();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
-
         for (String nextQuery: splitQueryStr)
         {
             CommandResult result = new CommandResult();
@@ -519,7 +512,7 @@ public class QueryController
                 {
                     long start = System.currentTimeMillis();
                     webResult = genericDAO.runGenericQuery
-                                    (s, null, (String)session.getAttribute("user_key"), userPrefs.getMaxRecordsinSQLQueryWindow());
+                                    (s, null, Utils.getConnectionSessionId(session), userPrefs.getMaxRecordsinSQLQueryWindow());
                     long end = System.currentTimeMillis();
 
                     double timeTaken = new Double(end - start).doubleValue();
@@ -556,16 +549,16 @@ public class QueryController
                 {
                     if (determineQueryType(s).equals("COMMIT"))
                     {
-                        result = genericDAO.runStatement("commit", elapsedTime, "Y", (String)session.getAttribute("user_key"));
+                        result = genericDAO.runStatement("commit", elapsedTime, "Y", Utils.getConnectionSessionId(session));
                     }
                     else if (determineQueryType(s).equals("ROLLBACK"))
                     {
-                        result = genericDAO.runStatement("rollback", elapsedTime, "Y", (String)session.getAttribute("user_key"));
+                        result = genericDAO.runStatement("rollback", elapsedTime, "Y", Utils.getConnectionSessionId(session));
                     }
                     else
                     {
                         result = genericDAO.runStatement
-                                (s, elapsedTime, isDDL(s), (String)session.getAttribute("user_key"));
+                                (s, elapsedTime, isDDL(s), Utils.getConnectionSessionId(session));
                     }
 
                     ddl = false;
@@ -611,7 +604,7 @@ public class QueryController
             session.setAttribute("schemaMap",
                         genericDAO.populateSchemaMap
                                     ((String)session.getAttribute("schema"),
-                                    (String)session.getAttribute("user_key")));
+                                    Utils.getConnectionSessionId(session)));
         }
 
         return queryResults;

@@ -1,7 +1,6 @@
 package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Result;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.constraints.Constraint;
 import com.pas.tools.mysqlweb.dao.constraints.ConstraintDAO;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
@@ -9,6 +8,7 @@ import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,22 +28,25 @@ public class ConstraintController
 {
     protected static Logger logger = LoggerFactory.getLogger(ConstraintController.class);
 
+    @Autowired
+    ConstraintDAO constraintDAO;
+
+    @Autowired
+    GenericDAO genericDAO;
+
     @GetMapping(value = "/constraints")
     public String showConstraints
             (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
         String schema = null;
 
         log.info("Received request to show constraints");
-
-        ConstraintDAO constraintDAO = PivotalMySQLWebDAOFactory.getConstraintDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -76,20 +79,20 @@ public class ConstraintController
                                 (String) request.getParameter("tableName"),
                                 (String) request.getParameter("constraintType"),
                                 constraintAction,
-                                (String) session.getAttribute("user_key"));
+                                Utils.getConnectionSessionId(session));
                 model.addAttribute("result", result);
             }
         }
 
         List<Constraint> constraints = constraintDAO.retrieveConstraintList
-                (schema, null, (String)session.getAttribute("user_key"));
+                (schema, null, Utils.getConnectionSessionId(session));
 
         model.addAttribute("records", constraints.size());
         model.addAttribute("estimatedrecords", constraints.size());
         model.addAttribute("constraints", constraints);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 
@@ -104,7 +107,7 @@ public class ConstraintController
 
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -113,9 +116,6 @@ public class ConstraintController
         List<Constraint> constraints = null;
 
         log.info("Received request to perform an action on the constraints");
-
-        ConstraintDAO constraintDAO = PivotalMySQLWebDAOFactory.getConstraintDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -136,7 +136,7 @@ public class ConstraintController
             constraints = constraintDAO.retrieveConstraintList
                     (schema,
                     (String)request.getParameter("search"),
-                    (String)session.getAttribute("user_key"));
+                    Utils.getConnectionSessionId(session));
 
             model.addAttribute("search", (String)request.getParameter("search"));
         }
@@ -162,7 +162,7 @@ public class ConstraintController
                              commandStr,
                              "",
                              "",
-                             (String)session.getAttribute("user_key"));
+                             Utils.getConnectionSessionId(session));
 
                     al.add(result);
                 }
@@ -171,7 +171,7 @@ public class ConstraintController
             }
 
             constraints = constraintDAO.retrieveConstraintList
-                    (schema, null, (String)session.getAttribute("user_key"));
+                    (schema, null, Utils.getConnectionSessionId(session));
 
         }
 
@@ -180,7 +180,7 @@ public class ConstraintController
         model.addAttribute("constraints", constraints);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 

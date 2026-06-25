@@ -11,9 +11,9 @@ import javax.servlet.http.HttpSessionListener;
 public class ApplicationSessionConfiguration
 {
     @Bean
-    public ServletListenerRegistrationBean<HttpSessionListener> sessionListener()
+    public ServletListenerRegistrationBean<HttpSessionListener> sessionListenerRegistration(
+            SessionListener sessionListener)
     {
-        return new ServletListenerRegistrationBean<HttpSessionListener>(new SessionListener());
+        return new ServletListenerRegistrationBean<>(sessionListener);
     }
-
 }

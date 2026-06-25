@@ -2,12 +2,12 @@ package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Result;
 import com.pas.tools.mysqlweb.beans.WebResult;
-import com.pas.tools.mysqlweb.dao.PivotalMySQLWebDAOFactory;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.dao.indexes.Index;
 import com.pas.tools.mysqlweb.dao.indexes.IndexDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,13 +25,19 @@ import java.util.List;
 @Controller
 public class IndexController
 {
+    @Autowired
+    IndexDAO indexDAO;
+
+    @Autowired
+    GenericDAO genericDAO;
+
     @GetMapping(value = "/indexes")
     public String showIndexes
             (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception {
 
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -39,9 +45,6 @@ public class IndexController
         WebResult indexStructure;
 
         log.info("Received request to show indexes");
-
-        IndexDAO indexDAO = PivotalMySQLWebDAOFactory.getIndexDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -72,7 +75,7 @@ public class IndexController
                                 (schema,
                                  (String)request.getParameter("tabName"),
                                  (String)request.getParameter("idxName"),
-                                 (String)session.getAttribute("user_key"));
+                                 Utils.getConnectionSessionId(session));
 
                 model.addAttribute("indexStructure", indexStructure);
                 model.addAttribute("indexname", (String)request.getParameter("idxName"));
@@ -85,7 +88,7 @@ public class IndexController
                                         (String) request.getParameter("idxName"),
                                         idxAction,
                                         (String) request.getParameter("tableName"),
-                                        (String) session.getAttribute("user_key"));
+                                        Utils.getConnectionSessionId(session));
                 model.addAttribute("result", result);
 
                 if (result.getMessage().startsWith("SUCCESS"))
@@ -95,21 +98,21 @@ public class IndexController
                         session.setAttribute("schemaMap",
                                             genericDAO.populateSchemaMap
                                                 ((String)session.getAttribute("schema"),
-                                                (String)session.getAttribute("user_key")));
+                                                Utils.getConnectionSessionId(session)));
                     }
                 }
             }
         }
 
         List<Index> indexes = indexDAO.retrieveIndexList
-                (schema, null, (String)session.getAttribute("user_key"));
+                (schema, null, Utils.getConnectionSessionId(session));
 
         model.addAttribute("records", indexes.size());
         model.addAttribute("estimatedrecords", indexes.size());
         model.addAttribute("indexes", indexes);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 
@@ -122,7 +125,7 @@ public class IndexController
     {
         if (Utils.verifyConnection(response, session))
         {
-            log.info("user_key is null OR Connection stale so new Login required");
+            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
@@ -131,9 +134,6 @@ public class IndexController
         List<Index> indexes = null;
 
         log.info("Received request to perform an action on the indexes");
-
-        IndexDAO indexDAO = PivotalMySQLWebDAOFactory.getIndexDAO();
-        GenericDAO genericDAO = PivotalMySQLWebDAOFactory.getGenericDAO();
 
         String selectedSchema = request.getParameter("selectedSchema");
         log.info("selectedSchema = " + selectedSchema);
@@ -154,7 +154,7 @@ public class IndexController
             indexes = indexDAO.retrieveIndexList
                     (schema,
                             (String)request.getParameter("search"),
-                            (String)session.getAttribute("user_key"));
+                            Utils.getConnectionSessionId(session));
 
             model.addAttribute("search", (String)request.getParameter("search"));
         }
@@ -179,7 +179,7 @@ public class IndexController
                              index,
                              commandStr,
                              "",
-                             (String)session.getAttribute("user_key"));
+                             Utils.getConnectionSessionId(session));
 
                     al.add(result);
                 }
@@ -188,7 +188,7 @@ public class IndexController
             }
 
             indexes = indexDAO.retrieveIndexList
-                    (schema, null, (String)session.getAttribute("user_key"));
+                    (schema, null, Utils.getConnectionSessionId(session));
 
         }
 
@@ -197,7 +197,7 @@ public class IndexController
         model.addAttribute("indexes", indexes);
 
         model.addAttribute
-                ("schemas", genericDAO.allSchemas((String) session.getAttribute("user_key")));
+                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
 
         model.addAttribute("chosenSchema", schema);
 
