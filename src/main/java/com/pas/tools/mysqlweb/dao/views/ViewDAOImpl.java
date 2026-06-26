@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -68,10 +69,9 @@ public class ViewDAOImpl implements ViewDAO
         try
         {
             JdbcTemplate jdbcTemplate = jdbcSupport.getJdbcTemplate(sessionId);
-            return jdbcTemplate.queryForObject(
-                    Constants.USER_VIEW_DEF,
-                    new Object[]{schemaName, viewName},
-                    String.class);
+            List<Map<String, Object>> resultList = jdbcTemplate.queryForList(
+                    String.format(Constants.SHOW_CREATE_VIEW, schemaName, viewName));
+            return (String) resultList.get(0).get("Create View");
         }
         catch (Exception ex)
         {

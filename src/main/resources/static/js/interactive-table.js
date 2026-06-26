@@ -1,4 +1,46 @@
 /**
+ * @returns {number}
+ */
+function getDefaultPageLength() {
+    var configured = window.mysqlWebRecordsToDisplay
+
+    if (configured == null || configured === '') {
+        var meta = document.querySelector('meta[name="mysqlweb-records-to-display"]')
+        if (meta) {
+            configured = meta.getAttribute('content')
+        }
+    }
+
+    var parsed = parseInt(configured, 10)
+    if (!isNaN(parsed) && parsed > 0) {
+        return parsed
+    }
+
+    return 10
+}
+
+/**
+ * @param {number} defaultLength
+ * @returns {number[]}
+ */
+function buildPageLengthOptions(defaultLength) {
+    var options = [10, 25, 50, 100, -1]
+    if (options.indexOf(defaultLength) === -1 && defaultLength > 0) {
+        options.push(defaultLength)
+        options.sort(function (a, b) {
+            if (a === -1) {
+                return 1
+            }
+            if (b === -1) {
+                return -1
+            }
+            return a - b
+        })
+    }
+    return options
+}
+
+/**
  * Lightweight client-side table controls (search, sort, pagination)
  * to replace DataTables on pages that only need basic interactivity.
  */
@@ -8,8 +50,8 @@ function initInteractiveTable(table, options) {
     }
 
     var settings = {
-        pageLength: 10,
-        pageLengthOptions: [10, 25, 50, 100, -1],
+        pageLength: getDefaultPageLength(),
+        pageLengthOptions: buildPageLengthOptions(getDefaultPageLength()),
         searchable: true,
         sortable: true,
         paginate: true
@@ -364,10 +406,11 @@ function getCellSortValue(cell) {
     return cell.textContent.trim()
 }
 
-document.addEventListener('DOMContentLoaded', function () {
+function bootstrapInteractiveTables() {
+    var defaultPageLength = getDefaultPageLength()
     var options = {
-        pageLength: 10,
-        pageLengthOptions: [10, 25, 50, 100, -1]
+        pageLength: defaultPageLength,
+        pageLengthOptions: buildPageLengthOptions(defaultPageLength)
     }
     var initialized = new Set()
 
@@ -380,4 +423,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (legacyTable && !initialized.has(legacyTable)) {
         initInteractiveTable(legacyTable, options)
     }
-})
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrapInteractiveTables)
+} else {
+    bootstrapInteractiveTables()
+}

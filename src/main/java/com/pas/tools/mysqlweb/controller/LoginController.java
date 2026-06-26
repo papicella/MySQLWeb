@@ -25,7 +25,6 @@ public class LoginController
     {
         log.info("Received request to show login page");
         model.addAttribute("loginObj", loginSessionService.defaultLogin());
-        loginSessionService.applyDefaultTheme(session);
         return "login";
     }
 
@@ -52,7 +51,6 @@ public class LoginController
             log.warn("Login failed for user {}: {}", username, ex.getMessage());
             model.addAttribute("loginerror", ex.getMessage());
             model.addAttribute("loginObj", loginObj);
-            loginSessionService.applyDefaultTheme(session);
             return "login";
         }
     }

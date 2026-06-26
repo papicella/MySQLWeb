@@ -43,7 +43,6 @@ class LoginControllerTest
 
         assertEquals("login", view);
         assertEquals(defaultLogin, model.getAttribute("loginObj"));
-        verify(loginSessionService).applyDefaultTheme(session);
     }
 
     @Test
@@ -99,7 +98,5 @@ class LoginControllerTest
         assertEquals("user", loginObj.getUsername());
         assertEquals("badpass", loginObj.getPassword());
         assertEquals("jdbc:mysql://localhost:3306/apples", loginObj.getUrl());
-
-        verify(loginSessionService).applyDefaultTheme(session);
     }
 }

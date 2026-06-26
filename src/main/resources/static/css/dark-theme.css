@@ -523,6 +523,40 @@ button.user-badge:hover {
     box-shadow: var(--shadow);
 }
 
+/* Preferences form — label column right, uniform inputs */
+.prefs-form-container {
+    max-width: 640px;
+}
+
+.prefs-form .form-group {
+    display: grid;
+    grid-template-columns: 220px 280px;
+    align-items: center;
+    gap: 0 16px;
+    flex-wrap: nowrap;
+}
+
+.prefs-form .form-group label {
+    text-align: right;
+    min-width: unset;
+    justify-self: end;
+    width: 100%;
+}
+
+.prefs-form .form-group .input-group {
+    flex: unset;
+    width: 280px;
+    max-width: 280px;
+    justify-self: start;
+}
+
+.prefs-form .form-group.button-group {
+    display: flex;
+    grid-template-columns: unset;
+    justify-content: center;
+    margin-top: 10px;
+}
+
 .bs-example {
     padding: 10px;
 }
@@ -1811,6 +1845,7 @@ table.table.table-ddl-table {
 }
 
 .table-ddl-pre {
+    display: block;
     margin: 0;
     padding: 12px 15px;
     font-family: Consolas, Monaco, 'Courier New', monospace;
@@ -1820,6 +1855,10 @@ table.table.table-ddl-table {
     word-break: break-word;
     color: var(--text-primary);
     background: transparent;
+}
+
+.table-ddl-cell .table-ddl-pre {
+    white-space: pre-wrap;
 }
 
 .table-structure-block {

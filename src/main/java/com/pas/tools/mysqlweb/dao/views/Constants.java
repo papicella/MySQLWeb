@@ -30,6 +30,8 @@ public interface Constants
                 "where table_schema = ? " +
                 "and   table_name = ? ";
 
+        public static String SHOW_CREATE_VIEW = "SHOW CREATE VIEW %s.%s";
+
         public static String DROP_VIEW = "drop view %s.%s";
 
         public static String DROP_VIEW_PUBLIC = "drop view %s";

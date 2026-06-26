@@ -23,6 +23,8 @@ import java.util.List;
 @Controller
 public class ViewController
 {
+    private static final String VIEW_LIST_PARAM = "selected_view[]";
+
     @Autowired
     ViewDAO viewDAO;
 
@@ -33,7 +35,7 @@ public class ViewController
     public String showViews(Model model, HttpServletResponse response,
                             HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -50,16 +52,14 @@ public class ViewController
             handleViewAction(model, session, schema, connectionId, viewAction, request.getParameter("viewName"));
         }
 
-        List<View> views = viewDAO.retrieveViewList(schema, null, connectionId);
-        populateViewsModel(model, session, schema, views);
-        return "views";
+        return renderViewsPage(model, schema, connectionId, null);
     }
 
     @PostMapping("/views")
     public String performViewAction(Model model, HttpServletResponse response,
                                     HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -68,25 +68,29 @@ public class ViewController
 
         String schema = resolveSchema(request, session);
         String connectionId = Utils.getConnectionSessionId(session);
-        List<View> views;
+        String search = request.getParameter("searchpressed") != null ? request.getParameter("search") : null;
 
-        if (request.getParameter("searchpressed") != null)
-        {
-            String search = request.getParameter("search");
-            views = viewDAO.retrieveViewList(schema, search, connectionId);
-            model.addAttribute("search", search);
-        }
-        else
+        if (search == null)
         {
             processBulkViewCommands(model, request, schema, connectionId);
-            views = viewDAO.retrieveViewList(schema, null, connectionId);
         }
 
-        populateViewsModel(model, session, schema, views);
+        return renderViewsPage(model, schema, connectionId, search);
+    }
+
+    private String renderViewsPage(Model model, String schema, String connectionId, String search)
+            throws Exception
+    {
+        List<View> views = viewDAO.retrieveViewList(schema, search, connectionId);
+        populateViewsModel(model, schema, connectionId, views);
+        if (search != null)
+        {
+            model.addAttribute("search", search);
+        }
         return "views";
     }
 
-    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
+    private boolean requireConnection(HttpServletResponse response, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
@@ -105,10 +109,9 @@ public class ViewController
         return schema;
     }
 
-    private void populateViewsModel(Model model, HttpSession session, String schema, List<View> views)
+    private void populateViewsModel(Model model, String schema, String connectionId, List<View> views)
             throws Exception
     {
-        String connectionId = Utils.getConnectionSessionId(session);
         int count = views.size();
         model.addAttribute("records", count);
         model.addAttribute("estimatedrecords", count);
@@ -120,17 +123,28 @@ public class ViewController
     private void handleViewAction(Model model, HttpSession session, String schema, String connectionId,
                                   String viewAction, String viewName) throws Exception
     {
-        if ("DEF".equals(viewAction))
+        if ("DEF".equalsIgnoreCase(viewAction))
         {
             model.addAttribute("viewName", viewName);
             model.addAttribute("viewdef", viewDAO.getViewDefinition(schema, viewName, connectionId));
             return;
         }
 
-        Result result = viewDAO.simpleviewCommand(schema, viewName, viewAction, connectionId);
-        model.addAttribute("result", result);
+        applyViewCommand(model, session, schema, connectionId, viewName, viewAction);
+    }
 
-        if (result.getMessage().startsWith("SUCCESS") && viewAction.equalsIgnoreCase("DROP"))
+    private void applyViewCommand(Model model, HttpSession session, String schema, String connectionId,
+                                    String viewName, String command) throws Exception
+    {
+        Result result = viewDAO.simpleviewCommand(schema, viewName, command, connectionId);
+        model.addAttribute("result", result);
+        refreshSchemaMapOnSuccessfulDrop(session, connectionId, result, command);
+    }
+
+    private void refreshSchemaMapOnSuccessfulDrop(HttpSession session, String connectionId,
+                                                  Result result, String command) throws Exception
+    {
+        if (result.getMessage().startsWith("SUCCESS") && "DROP".equalsIgnoreCase(command))
         {
             session.setAttribute("schemaMap",
                     genericDAO.populateSchemaMap((String) session.getAttribute("schema"), connectionId));
@@ -140,10 +154,10 @@ public class ViewController
     private void processBulkViewCommands(Model model, HttpServletRequest request,
                                          String schema, String connectionId) throws Exception
     {
-        String[] viewList = request.getParameterValues("selected_view[]");
+        String[] viewList = request.getParameterValues(VIEW_LIST_PARAM);
         String command = request.getParameter("submit_mult");
 
-        log.info("tableList = {}", Arrays.toString(viewList));
+        log.info("viewList = {}", Arrays.toString(viewList));
         log.info("command = {}", command);
 
         if (viewList == null)

@@ -39,7 +39,6 @@ public class AutoLoginController
             log.warn("Auto login failed for user {}: {}", username, ex.getMessage());
             model.addAttribute("loginerror", ex.getMessage());
             model.addAttribute("loginObj", loginSessionService.defaultLogin());
-            loginSessionService.applyDefaultTheme(session);
             return "login";
         }
     }

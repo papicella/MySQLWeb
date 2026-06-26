@@ -5,7 +5,6 @@ import com.pas.tools.mysqlweb.beans.UserPref;
 import com.pas.tools.mysqlweb.beans.WebResult;
 import com.pas.tools.mysqlweb.dao.generic.Constants;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
-import com.pas.tools.mysqlweb.utils.Themes;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,12 +35,6 @@ public class LoginSessionService
         return new Login("", "", DEFAULT_JDBC_URL, "apples");
     }
 
-    public void applyDefaultTheme(HttpSession session)
-    {
-        session.setAttribute("themeMain", Themes.defaultTheme);
-        session.setAttribute("themeMin", Themes.defaultThemeMin);
-    }
-
     public WebResult connectAndInitSession(
             String username,
             String password,
@@ -66,7 +59,6 @@ public class LoginSessionService
         session.setAttribute("prefs", userPref);
         session.setAttribute("history", new LinkedList<>());
         session.setAttribute("connectedAt", connectedAt);
-        applyDefaultTheme(session);
 
         Map<String, Long> schemaMap = genericDAO.populateSchemaMap(schema, sessionId);
         log.info("schemaMap={}", schemaMap);

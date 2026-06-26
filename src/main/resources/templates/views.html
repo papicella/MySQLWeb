@@ -7,11 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
+    <th:block th:replace="prefs-config :: head"></th:block>
+
+    <link rel="stylesheet" th:href="@{css/dark-theme.css(v=9)}" media="screen" />
     <script th:src="@{js/navbar.js}" type="text/javascript"></script>
 
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
-    <script th:src="@{js/interactive-table.js}" type="text/javascript"></script>
+    <script th:src="@{js/interactive-table.js(v=2)}" type="text/javascript"></script>
 
     <script type="text/javascript">
         // <![CDATA[
@@ -186,30 +188,18 @@
     </div>
 </div>
 
-<div class="col" th:if="${viewdef != null}">
-    <div class="panel-group" id="accordion">
-        <div class="panel">
-            <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a data-parent="#accordion" href="#collapseOne">
-                        <span th:text="${viewName}" /> Definition
-                    </a>
-                </h4>
-            </div>
-            <div id="collapseOne" class="panel-collapse collapse in">
-                <div class="panel-body">
-                    <table class="table">
-                        <tbody>
-                        <tr>
-                            <td>
-                                    <span th:text="${viewdef}" />
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+<div class="table-details-section" th:if="${viewdef != null}">
+    <div class="table-details-block table-ddl-block">
+        <h2 class="table-details-title"><span th:text="${viewName}" /> Definition</h2>
+        <table class="table table-details-table table-ddl-table">
+            <tbody>
+            <tr>
+                <td class="table-ddl-cell">
+                    <pre class="table-ddl-pre" th:text="${viewdef}"></pre>
+                </td>
+            </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 
