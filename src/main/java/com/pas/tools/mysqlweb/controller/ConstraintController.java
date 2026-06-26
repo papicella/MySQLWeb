@@ -6,14 +6,11 @@ import com.pas.tools.mysqlweb.dao.constraints.ConstraintDAO;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,164 +23,137 @@ import java.util.List;
 @Controller
 public class ConstraintController
 {
-    protected static Logger logger = LoggerFactory.getLogger(ConstraintController.class);
-
     @Autowired
     ConstraintDAO constraintDAO;
 
     @Autowired
     GenericDAO genericDAO;
 
-    @GetMapping(value = "/constraints")
-    public String showConstraints
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @GetMapping("/constraints")
+    public String showConstraints(Model model, HttpServletResponse response,
+                                  HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (Utils.verifyConnection(response, session))
+        if (redirectIfNoConnection(response, session))
         {
-            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
-
-        String schema = null;
 
         log.info("Received request to show constraints");
 
-        String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
-
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String) session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
-
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
         String constraintAction = request.getParameter("constraintAction");
-        Result result = new Result();
 
         if (constraintAction != null)
         {
-            log.info("constraintAction = " + constraintAction);
-            result = null;
-
-            if (constraintAction.equals("DROP"))
-            {
-                result =
-                        constraintDAO.simpleconstraintCommand
-                                (schema,
-                                (String) request.getParameter("constraintName"),
-                                (String) request.getParameter("tableName"),
-                                (String) request.getParameter("constraintType"),
-                                constraintAction,
-                                Utils.getConnectionSessionId(session));
-                model.addAttribute("result", result);
-            }
+            log.info("constraintAction = {}", constraintAction);
+            handleConstraintAction(model, request, schema, connectionId, constraintAction);
         }
 
-        List<Constraint> constraints = constraintDAO.retrieveConstraintList
-                (schema, null, Utils.getConnectionSessionId(session));
-
-        model.addAttribute("records", constraints.size());
-        model.addAttribute("estimatedrecords", constraints.size());
-        model.addAttribute("constraints", constraints);
-
-        model.addAttribute
-                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
-        model.addAttribute("chosenSchema", schema);
-
+        List<Constraint> constraints = constraintDAO.retrieveConstraintList(schema, null, connectionId);
+        populateConstraintsModel(model, session, schema, constraints);
         return "constraints";
-
     }
 
-    @PostMapping(value = "/constraints")
-    public String performConstraintAction
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @PostMapping("/constraints")
+    public String performConstraintAction(Model model, HttpServletResponse response,
+                                          HttpServletRequest request, HttpSession session) throws Exception
     {
-
-        if (Utils.verifyConnection(response, session))
+        if (redirectIfNoConnection(response, session))
         {
-            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
-        String schema = null;
-        Result result = new Result();
-        List<Constraint> constraints = null;
-
         log.info("Received request to perform an action on the constraints");
 
-        String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
-
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String) session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
+        List<Constraint> constraints;
 
         if (request.getParameter("searchpressed") != null)
         {
-            constraints = constraintDAO.retrieveConstraintList
-                    (schema,
-                    (String)request.getParameter("search"),
-                    Utils.getConnectionSessionId(session));
-
-            model.addAttribute("search", (String)request.getParameter("search"));
+            String search = request.getParameter("search");
+            constraints = constraintDAO.retrieveConstraintList(schema, search, connectionId);
+            model.addAttribute("search", search);
         }
         else
         {
-            String[] tableList  = request.getParameterValues("selected_constraint[]");
-            String   commandStr = request.getParameter("submit_mult");
-
-            log.info("tableList = " + Arrays.toString(tableList));
-            log.info("command = " + commandStr);
-
-            // start actions now if tableList is not null
-
-            if (tableList != null)
-            {
-                List al = new ArrayList<Result>();
-                for (String constraint: tableList)
-                {
-                    result = null;
-                    result = constraintDAO.simpleconstraintCommand
-                            (schema,
-                             constraint,
-                             commandStr,
-                             "",
-                             "",
-                             Utils.getConnectionSessionId(session));
-
-                    al.add(result);
-                }
-
-                model.addAttribute("arrayresult", al);
-            }
-
-            constraints = constraintDAO.retrieveConstraintList
-                    (schema, null, Utils.getConnectionSessionId(session));
-
+            processBulkConstraintCommands(model, request, schema, connectionId);
+            constraints = constraintDAO.retrieveConstraintList(schema, null, connectionId);
         }
 
-        model.addAttribute("records", constraints.size());
-        model.addAttribute("estimatedrecords", constraints.size());
-        model.addAttribute("constraints", constraints);
-
-        model.addAttribute
-                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
-        model.addAttribute("chosenSchema", schema);
-
+        populateConstraintsModel(model, session, schema, constraints);
         return "constraints";
+    }
+
+    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
+    {
+        if (Utils.verifyConnection(response, session))
+        {
+            log.info("No active JDBC connection for session so new Login required");
+            return true;
+        }
+        return false;
+    }
+
+    private String resolveSchema(HttpServletRequest request, HttpSession session)
+    {
+        String selectedSchema = request.getParameter("selectedSchema");
+        log.info("selectedSchema = {}", selectedSchema);
+        String schema = selectedSchema != null ? selectedSchema : (String) session.getAttribute("schema");
+        log.info("schema = {}", schema);
+        return schema;
+    }
+
+    private void populateConstraintsModel(Model model, HttpSession session, String schema,
+                                            List<Constraint> constraints) throws Exception
+    {
+        String connectionId = Utils.getConnectionSessionId(session);
+        int count = constraints.size();
+        model.addAttribute("records", count);
+        model.addAttribute("estimatedrecords", count);
+        model.addAttribute("constraints", constraints);
+        model.addAttribute("schemas", genericDAO.allSchemas(connectionId));
+        model.addAttribute("chosenSchema", schema);
+    }
+
+    private void handleConstraintAction(Model model, HttpServletRequest request, String schema,
+                                        String connectionId, String constraintAction) throws Exception
+    {
+        if (!"DROP".equals(constraintAction))
+        {
+            return;
+        }
+
+        Result result = constraintDAO.simpleconstraintCommand(
+                schema,
+                request.getParameter("constraintName"),
+                request.getParameter("tableName"),
+                request.getParameter("constraintType"),
+                constraintAction,
+                connectionId);
+        model.addAttribute("result", result);
+    }
+
+    private void processBulkConstraintCommands(Model model, HttpServletRequest request,
+                                               String schema, String connectionId) throws Exception
+    {
+        String[] constraintList = request.getParameterValues("selected_constraint[]");
+        String command = request.getParameter("submit_mult");
+
+        log.info("tableList = {}", Arrays.toString(constraintList));
+        log.info("command = {}", command);
+
+        if (constraintList == null)
+        {
+            return;
+        }
+
+        List<Result> results = new ArrayList<>();
+        for (String constraint : constraintList)
+        {
+            results.add(constraintDAO.simpleconstraintCommand(schema, constraint, command, "", "", connectionId));
+        }
+        model.addAttribute("arrayresult", results);
     }
 }

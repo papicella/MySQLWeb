@@ -12,7 +12,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -30,177 +29,133 @@ public class ViewController
     @Autowired
     GenericDAO genericDAO;
 
-    @GetMapping(value = "/views")
-    public String showViews
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @GetMapping("/views")
+    public String showViews(Model model, HttpServletResponse response,
+                            HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (Utils.verifyConnection(response, session))
+        if (redirectIfNoConnection(response, session))
         {
-            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
-
-        String schema = null;
 
         log.info("Received request to show views");
 
-        Result result = new Result();
-
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
         String viewAction = request.getParameter("viewAction");
-        String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
-
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String)session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
 
         if (viewAction != null)
         {
-            log.info("viewAction = " + viewAction);
-
-            if (viewAction.equals("DEF"))
-            {
-                String def =
-                        viewDAO.getViewDefinition
-                                (schema,
-                                        (String)request.getParameter("viewName"),
-                                        Utils.getConnectionSessionId(session));
-
-                model.addAttribute("viewName", (String)request.getParameter("viewName"));
-                model.addAttribute("viewdef", def);
-            }
-            else
-            {
-                result = null;
-                result =
-                        viewDAO.simpleviewCommand
-                                (schema,
-                                        (String)request.getParameter("viewName"),
-                                        viewAction,
-                                        Utils.getConnectionSessionId(session));
-
-                model.addAttribute("result", result);
-
-                if (result.getMessage().startsWith("SUCCESS"))
-                {
-                    if (viewAction.equalsIgnoreCase("DROP"))
-                    {
-                        session.setAttribute("schemaMap",
-                                        genericDAO.populateSchemaMap
-                                                ((String)session.getAttribute("schema"),
-                                                Utils.getConnectionSessionId(session)));
-                    }
-                }
-            }
+            log.info("viewAction = {}", viewAction);
+            handleViewAction(model, session, schema, connectionId, viewAction, request.getParameter("viewName"));
         }
 
-        List<View> views = viewDAO.retrieveViewList
-                (schema,
-                        null,
-                        Utils.getConnectionSessionId(session));
-
-        model.addAttribute("records", views.size());
-        model.addAttribute("estimatedrecords", views.size());
-        model.addAttribute("views", views);
-
-        model.addAttribute
-                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
-        model.addAttribute("chosenSchema", schema);
-
+        List<View> views = viewDAO.retrieveViewList(schema, null, connectionId);
+        populateViewsModel(model, session, schema, views);
         return "views";
     }
 
-    @PostMapping(value = "/views")
-    public String performViewAction
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @PostMapping("/views")
+    public String performViewAction(Model model, HttpServletResponse response,
+                                    HttpServletRequest request, HttpSession session) throws Exception
     {
-        String schema = null;
-
-        if (Utils.verifyConnection(response, session))
+        if (redirectIfNoConnection(response, session))
         {
-            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
 
-        Result result = new Result();
-        List<View> views = null;
-
         log.info("Received request to perform an action on the views");
 
-        String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
-
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String)session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
+        List<View> views;
 
         if (request.getParameter("searchpressed") != null)
         {
-            views = viewDAO.retrieveViewList
-                    (schema,
-                            (String)request.getParameter("search"),
-                            Utils.getConnectionSessionId(session));
-
-            model.addAttribute("search", (String)request.getParameter("search"));
+            String search = request.getParameter("search");
+            views = viewDAO.retrieveViewList(schema, search, connectionId);
+            model.addAttribute("search", search);
         }
         else
         {
-            String[] tableList  = request.getParameterValues("selected_view[]");
-            String   commandStr = request.getParameter("submit_mult");
-
-            log.info("tableList = " + Arrays.toString(tableList));
-            log.info("command = " + commandStr);
-
-            // start actions now if tableList is not null
-
-            if (tableList != null)
-            {
-                List al = new ArrayList<Result>();
-                for (String view: tableList)
-                {
-                    result = null;
-                    result =
-                            viewDAO.simpleviewCommand
-                                    (schema,
-                                            view,
-                                            commandStr,
-                                            Utils.getConnectionSessionId(session));
-                    al.add(result);
-                }
-
-                model.addAttribute("arrayresult", al);
-            }
-
-            views = viewDAO.retrieveViewList
-                    (schema,
-                            null,
-                            Utils.getConnectionSessionId(session));
-
+            processBulkViewCommands(model, request, schema, connectionId);
+            views = viewDAO.retrieveViewList(schema, null, connectionId);
         }
 
-        model.addAttribute("records", views.size());
-        model.addAttribute("estimatedrecords", views.size());
-        model.addAttribute("views", views);
-        model.addAttribute
-                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
-        model.addAttribute("chosenSchema", schema);
-
+        populateViewsModel(model, session, schema, views);
         return "views";
+    }
+
+    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
+    {
+        if (Utils.verifyConnection(response, session))
+        {
+            log.info("No active JDBC connection for session so new Login required");
+            return true;
+        }
+        return false;
+    }
+
+    private String resolveSchema(HttpServletRequest request, HttpSession session)
+    {
+        String selectedSchema = request.getParameter("selectedSchema");
+        log.info("selectedSchema = {}", selectedSchema);
+        String schema = selectedSchema != null ? selectedSchema : (String) session.getAttribute("schema");
+        log.info("schema = {}", schema);
+        return schema;
+    }
+
+    private void populateViewsModel(Model model, HttpSession session, String schema, List<View> views)
+            throws Exception
+    {
+        String connectionId = Utils.getConnectionSessionId(session);
+        int count = views.size();
+        model.addAttribute("records", count);
+        model.addAttribute("estimatedrecords", count);
+        model.addAttribute("views", views);
+        model.addAttribute("schemas", genericDAO.allSchemas(connectionId));
+        model.addAttribute("chosenSchema", schema);
+    }
+
+    private void handleViewAction(Model model, HttpSession session, String schema, String connectionId,
+                                  String viewAction, String viewName) throws Exception
+    {
+        if ("DEF".equals(viewAction))
+        {
+            model.addAttribute("viewName", viewName);
+            model.addAttribute("viewdef", viewDAO.getViewDefinition(schema, viewName, connectionId));
+            return;
+        }
+
+        Result result = viewDAO.simpleviewCommand(schema, viewName, viewAction, connectionId);
+        model.addAttribute("result", result);
+
+        if (result.getMessage().startsWith("SUCCESS") && viewAction.equalsIgnoreCase("DROP"))
+        {
+            session.setAttribute("schemaMap",
+                    genericDAO.populateSchemaMap((String) session.getAttribute("schema"), connectionId));
+        }
+    }
+
+    private void processBulkViewCommands(Model model, HttpServletRequest request,
+                                         String schema, String connectionId) throws Exception
+    {
+        String[] viewList = request.getParameterValues("selected_view[]");
+        String command = request.getParameter("submit_mult");
+
+        log.info("tableList = {}", Arrays.toString(viewList));
+        log.info("command = {}", command);
+
+        if (viewList == null)
+        {
+            return;
+        }
+
+        List<Result> results = new ArrayList<>();
+        for (String view : viewList)
+        {
+            results.add(viewDAO.simpleviewCommand(schema, view, command, connectionId));
+        }
+        model.addAttribute("arrayresult", results);
     }
 }

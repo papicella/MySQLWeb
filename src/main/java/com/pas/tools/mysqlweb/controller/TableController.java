@@ -1,7 +1,6 @@
 package com.pas.tools.mysqlweb.controller;
 
 import com.pas.tools.mysqlweb.beans.Result;
-import com.pas.tools.mysqlweb.beans.WebResult;
 import com.pas.tools.mysqlweb.dao.generic.GenericDAO;
 import com.pas.tools.mysqlweb.dao.tables.Table;
 import com.pas.tools.mysqlweb.dao.tables.TableDAO;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,206 +29,147 @@ public class TableController
     @Autowired
     GenericDAO genericDAO;
 
-    @GetMapping(value = "/tables")
-    public String showTables
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @GetMapping("/tables")
+    public String showTables(Model model, HttpServletResponse response,
+                             HttpServletRequest request, HttpSession session) throws Exception
     {
-
-        if (Utils.verifyConnection(response, session))
+        if (redirectIfNoConnection(response, session))
         {
-            log.info("No active JDBC connection for session so new Login required");
             return null;
         }
-
-        String schema = null;
-        WebResult tableStructure, tableDetails, tableIndexes;
 
         log.info("Received request to show tables");
 
-        String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
-
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String) session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
-
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
         String tabAction = request.getParameter("tabAction");
-        Result result = new Result();
+        String tabName = request.getParameter("tabName");
 
         if (tabAction != null)
         {
-            log.info("tabAction = " + tabAction);
-            result = null;
-
-            if (tabAction.equalsIgnoreCase("STRUCTURE"))
-            {
-
-                tableStructure =
-                        tableDAO.getTableStructure
-                                (schema,
-                                        (String)request.getParameter("tabName"),
-                                        Utils.getConnectionSessionId(session));
-
-
-                model.addAttribute("tableStructure", tableStructure);
-                model.addAttribute("tablename", (String)request.getParameter("tabName"));
-            }
-            else if (tabAction.equalsIgnoreCase("DETAILS"))
-            {
-                tableDetails =
-                        tableDAO.getTableDetails
-                                (schema,
-                                        (String)request.getParameter("tabName"),
-                                        Utils.getConnectionSessionId(session));
-
-
-                model.addAttribute("tableDetails", tableDetails);
-                model.addAttribute("tablename", (String)request.getParameter("tabName"));
-            }
-            else if (tabAction.equalsIgnoreCase("DDL"))
-            {
-                String ddl = tableDAO.runShowQuery(schema,
-                                                   (String)request.getParameter("tabName"),
-                                                   Utils.getConnectionSessionId(session));
-
-                model.addAttribute("tableDDL", ddl.trim());
-                model.addAttribute("tablename", (String)request.getParameter("tabName"));
-            }
-            else if (tabAction.equalsIgnoreCase("INDEXES"))
-            {
-                tableIndexes = tableDAO.showIndexes(schema,
-                        (String)request.getParameter("tabName"),
-                        Utils.getConnectionSessionId(session));
-
-                model.addAttribute("tableIndexes", tableIndexes);
-                model.addAttribute("tablename", (String)request.getParameter("tabName"));
-            }
-            else
-            {
-                result =
-                        tableDAO.simpletableCommand
-                                (schema,
-                                        (String)request.getParameter("tabName"),
-                                        tabAction,
-                                        Utils.getConnectionSessionId(session));
-                model.addAttribute("result", result);
-
-                if (result.getMessage().startsWith("SUCCESS"))
-                {
-                    if (tabAction.equalsIgnoreCase("DROP"))
-                    {
-                        session.setAttribute("schemaMap",
-                                             genericDAO.populateSchemaMap
-                                               ((String)session.getAttribute("schema"),
-                                                Utils.getConnectionSessionId(session)));
-                    }
-                }
-            }
+            log.info("tabAction = {}", tabAction);
+            handleTabAction(model, session, schema, connectionId, tabAction, tabName);
         }
 
-        List<Table> tbls = tableDAO.retrieveTableList
-                  (schema, null, Utils.getConnectionSessionId(session));
-
-        model.addAttribute("records", tbls.size());
-        model.addAttribute("estimatedrecords", tbls.size());
-        model.addAttribute("tables", tbls);
-
-        model.addAttribute
-                ("schemas",
-                 genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
-        model.addAttribute("chosenSchema", schema);
-
+        List<Table> tables = tableDAO.retrieveTableList(schema, null, connectionId);
+        populateTablesModel(model, session, schema, tables);
         return "tables";
     }
 
-    @PostMapping(value = "/tables")
-    public String performTableAction
-            (Model model, HttpServletResponse response, HttpServletRequest request, HttpSession session) throws Exception
+    @PostMapping("/tables")
+    public String performTableAction(Model model, HttpServletResponse response,
+                                     HttpServletRequest request, HttpSession session) throws Exception
+    {
+        if (redirectIfNoConnection(response, session))
+        {
+            return null;
+        }
+
+        log.info("Received request to perform an action on the tables");
+
+        String schema = resolveSchema(request, session);
+        String connectionId = Utils.getConnectionSessionId(session);
+        List<Table> tables;
+
+        if (request.getParameter("searchpressed") != null)
+        {
+            String search = request.getParameter("search");
+            tables = tableDAO.retrieveTableList(schema, search, connectionId);
+            model.addAttribute("search", search);
+        }
+        else
+        {
+            processBulkTableCommands(model, request, schema, connectionId);
+            tables = tableDAO.retrieveTableList(schema, null, connectionId);
+        }
+
+        populateTablesModel(model, session, schema, tables);
+        return "tables";
+    }
+
+    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
             log.info("No active JDBC connection for session so new Login required");
-            return null;
+            return true;
         }
+        return false;
+    }
 
-        String schema = null;
-        Result result = new Result();
-        List<Table> tbls = null;
-
-        log.info("Received request to perform an action on the tables");
-
+    private String resolveSchema(HttpServletRequest request, HttpSession session)
+    {
         String selectedSchema = request.getParameter("selectedSchema");
-        log.info("selectedSchema = " + selectedSchema);
+        log.info("selectedSchema = {}", selectedSchema);
+        String schema = selectedSchema != null ? selectedSchema : (String) session.getAttribute("schema");
+        log.info("schema = {}", schema);
+        return schema;
+    }
 
-        if (selectedSchema != null)
-        {
-            schema = selectedSchema;
-        }
-        else
-        {
-            schema = (String) session.getAttribute("schema");
-        }
-
-        log.info("schema = " + schema);
-
-        if (request.getParameter("searchpressed") != null)
-        {
-            tbls = tableDAO.retrieveTableList
-                            (schema,
-                            (String)request.getParameter("search"),
-                            Utils.getConnectionSessionId(session));
-
-            model.addAttribute("search", (String)request.getParameter("search"));
-        }
-        else
-        {
-            String[] tableList  = request.getParameterValues("selected_tbl[]");
-            String   commandStr = request.getParameter("submit_mult");
-
-            log.info("tableList = " + Arrays.toString(tableList));
-            log.info("command = " + commandStr);
-
-            // start actions now if tableList is not null
-
-            if (tableList != null)
-            {
-                List al = new ArrayList<Result>();
-                for (String table: tableList)
-                {
-                    result = null;
-                    result = tableDAO.simpletableCommand
-                            (schema,
-                                    table,
-                                    commandStr,
-                                    Utils.getConnectionSessionId(session));
-
-                    al.add(result);
-                }
-
-                model.addAttribute("arrayresult", al);
-            }
-
-            tbls = tableDAO.retrieveTableList
-                            (schema, null, Utils.getConnectionSessionId(session));
-        }
-
-        model.addAttribute("records", tbls.size());
-        model.addAttribute("estimatedrecords", tbls.size());
-        model.addAttribute("tables", tbls);
-
-        model.addAttribute
-                ("schemas", genericDAO.allSchemas(Utils.getConnectionSessionId(session)));
-
+    private void populateTablesModel(Model model, HttpSession session, String schema, List<Table> tables)
+            throws Exception
+    {
+        String connectionId = Utils.getConnectionSessionId(session);
+        int count = tables.size();
+        model.addAttribute("records", count);
+        model.addAttribute("estimatedrecords", count);
+        model.addAttribute("tables", tables);
+        model.addAttribute("schemas", genericDAO.allSchemas(connectionId));
         model.addAttribute("chosenSchema", schema);
+    }
 
-        return "tables";
+    private void handleTabAction(Model model, HttpSession session, String schema, String connectionId,
+                                 String tabAction, String tabName) throws Exception
+    {
+        switch (tabAction.toUpperCase())
+        {
+            case "STRUCTURE":
+                model.addAttribute("tableStructure", tableDAO.getTableStructure(schema, tabName, connectionId));
+                model.addAttribute("tablename", tabName);
+                break;
+            case "DETAILS":
+                model.addAttribute("tableDetails", tableDAO.getTableDetails(schema, tabName, connectionId));
+                model.addAttribute("tablename", tabName);
+                break;
+            case "DDL":
+                model.addAttribute("tableDDL", tableDAO.runShowQuery(schema, tabName, connectionId).trim());
+                model.addAttribute("tablename", tabName);
+                break;
+            case "INDEXES":
+                model.addAttribute("tableIndexes", tableDAO.showIndexes(schema, tabName, connectionId));
+                model.addAttribute("tablename", tabName);
+                break;
+            default:
+                Result result = tableDAO.simpletableCommand(schema, tabName, tabAction, connectionId);
+                model.addAttribute("result", result);
+                if (result.getMessage().startsWith("SUCCESS") && tabAction.equalsIgnoreCase("DROP"))
+                {
+                    session.setAttribute("schemaMap",
+                            genericDAO.populateSchemaMap((String) session.getAttribute("schema"), connectionId));
+                }
+                break;
+        }
+    }
+
+    private void processBulkTableCommands(Model model, HttpServletRequest request,
+                                          String schema, String connectionId) throws Exception
+    {
+        String[] tableList = request.getParameterValues("selected_tbl[]");
+        String command = request.getParameter("submit_mult");
+
+        log.info("tableList = {}", Arrays.toString(tableList));
+        log.info("command = {}", command);
+
+        if (tableList == null)
+        {
+            return;
+        }
+
+        List<Result> results = new ArrayList<>();
+        for (String table : tableList)
+        {
+            results.add(tableDAO.simpletableCommand(schema, table, command, connectionId));
+        }
+        model.addAttribute("arrayresult", results);
     }
 }
