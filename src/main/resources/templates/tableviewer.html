@@ -7,7 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link rel="stylesheet" th:href="@{css/dark-theme.css}" media="screen" />
+    <link rel="stylesheet" th:href="@{css/dark-theme.css(v=5)}" media="screen" />
     <script th:src="@{js/navbar.js}" type="text/javascript"></script>
     <script th:src="@{js/functions.js}" type="text/javascript"></script>
     <script th:src="@{js/interactive-table.js}" type="text/javascript"></script>
@@ -70,29 +70,21 @@
 </div>
 
 <div class="bs-example tables-viewer-panels">
-    <div class="panel-group" id="accordion">
-        <div class="panel">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <a data-parent="#accordion" href="#collapseOne">
-                        DDL [<span th:text="${tablename}" />]
-                    </a>
-                </h3>
-            </div>
-            <div id="collapseOne" class="panel-collapse collapse">
-                <div class="panel-body">
-                    <table class="table">
-                        <tbody>
-                        <tr>
-                            <td>
-                                <span th:text="${tableDDL}" />
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    <div class="table-details-section">
+        <div class="table-details-block table-ddl-block">
+            <h2 class="table-details-title"><span th:text="${tablename}" /> DDL</h2>
+            <table class="table table-details-table table-ddl-table">
+                <tbody>
+                <tr>
+                    <td class="table-ddl-cell">
+                        <pre class="table-ddl-pre" th:text="${tableDDL}"></pre>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
+    </div>
+    <div class="panel-group" id="accordion">
         <div class="panel">
             <div class="panel-heading">
                 <h3 class="panel-title">
@@ -122,35 +114,19 @@
                 </div>
             </div>
         </div>
-        <div class="panel">
-            <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a data-parent="#accordion2" href="#collapseThree">
-                        DETAILS [<span th:text="${tablename}" />]
-                    </a>
-                </h4>
-            </div>
-            <div id="collapseThree" class="panel-collapse collapse">
-                <div class="panel-body">
-                    <table class="table table-hover table-bordered table-condensed">
-                        <thead>
-                        <tr>
-                            <th style="text-align:center">Column</th>
-                            <th style="text-align:center">Data</th>
+        <div class="table-details-section">
+            <div class="table-details-block">
+                <h2 class="table-details-title"><span th:text="${tablename}" /> Details</h2>
+                <table class="table table-details-table">
+                    <tbody>
+                    <th:block th:each="rows : ${tableDetails.rows}">
+                        <tr th:each="columnName : ${tableDetails.columnNames}">
+                            <th scope="row" class="table-details-label" th:text="${columnName}"></th>
+                            <td class="table-details-value" th:text="${rows.get(columnName)}"></td>
                         </tr>
-                        </thead>
-                        <tbody>
-                        <div th:each="rows : ${tableDetails.rows}">
-                            <div th:each="columnName : ${tableDetails.columnNames}">
-                                <tr>
-                                    <td style="text-align:right" th:text="${columnName}"></td>
-                                    <td style="text-align:left" th:text="${rows.get(columnName)}"></td>
-                                </tr>
-                            </div>
-                        </div>
-                        </tbody>
-                    </table>
-                </div>
+                    </th:block>
+                    </tbody>
+                </table>
             </div>
         </div>
         <div class="panel">
