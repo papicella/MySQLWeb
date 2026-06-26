@@ -23,6 +23,8 @@ import java.util.List;
 @Controller
 public class IndexController
 {
+    private static final String INDEX_LIST_PARAM = "selected_idx[]";
+
     @Autowired
     IndexDAO indexDAO;
 
@@ -33,7 +35,7 @@ public class IndexController
     public String showIndexes(Model model, HttpServletResponse response,
                               HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -50,16 +52,14 @@ public class IndexController
             handleIdxAction(model, session, request, schema, connectionId, idxAction);
         }
 
-        List<Index> indexes = indexDAO.retrieveIndexList(schema, null, connectionId);
-        populateIndexesModel(model, session, schema, indexes);
-        return "indexes";
+        return renderIndexesPage(model, schema, connectionId, null);
     }
 
     @PostMapping("/indexes")
     public String performIndexAction(Model model, HttpServletResponse response,
                                      HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -68,25 +68,29 @@ public class IndexController
 
         String schema = resolveSchema(request, session);
         String connectionId = Utils.getConnectionSessionId(session);
-        List<Index> indexes;
+        String search = request.getParameter("searchpressed") != null ? request.getParameter("search") : null;
 
-        if (request.getParameter("searchpressed") != null)
-        {
-            String search = request.getParameter("search");
-            indexes = indexDAO.retrieveIndexList(schema, search, connectionId);
-            model.addAttribute("search", search);
-        }
-        else
+        if (search == null)
         {
             processBulkIndexCommands(model, request, schema, connectionId);
-            indexes = indexDAO.retrieveIndexList(schema, null, connectionId);
         }
 
-        populateIndexesModel(model, session, schema, indexes);
+        return renderIndexesPage(model, schema, connectionId, search);
+    }
+
+    private String renderIndexesPage(Model model, String schema, String connectionId, String search)
+            throws Exception
+    {
+        List<Index> indexes = indexDAO.retrieveIndexList(schema, search, connectionId);
+        populateIndexesModel(model, schema, connectionId, indexes);
+        if (search != null)
+        {
+            model.addAttribute("search", search);
+        }
         return "indexes";
     }
 
-    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
+    private boolean requireConnection(HttpServletResponse response, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
@@ -105,10 +109,9 @@ public class IndexController
         return schema;
     }
 
-    private void populateIndexesModel(Model model, HttpSession session, String schema, List<Index> indexes)
+    private void populateIndexesModel(Model model, String schema, String connectionId, List<Index> indexes)
             throws Exception
     {
-        String connectionId = Utils.getConnectionSessionId(session);
         int count = indexes.size();
         model.addAttribute("records", count);
         model.addAttribute("estimatedrecords", count);
@@ -130,12 +133,22 @@ public class IndexController
             return;
         }
 
-        String idxName = request.getParameter("idxName");
-        String tableName = request.getParameter("tableName");
-        Result result = indexDAO.simpleindexCommand(schema, idxName, idxAction, tableName, connectionId);
-        model.addAttribute("result", result);
+        applyIndexCommand(model, session, schema, connectionId,
+                request.getParameter("idxName"), request.getParameter("tableName"), idxAction);
+    }
 
-        if (result.getMessage().startsWith("SUCCESS") && idxAction.equalsIgnoreCase("DROP"))
+    private void applyIndexCommand(Model model, HttpSession session, String schema, String connectionId,
+                                   String idxName, String tableName, String command) throws Exception
+    {
+        Result result = indexDAO.simpleindexCommand(schema, idxName, command, tableName, connectionId);
+        model.addAttribute("result", result);
+        refreshSchemaMapOnSuccessfulDrop(session, connectionId, result, command);
+    }
+
+    private void refreshSchemaMapOnSuccessfulDrop(HttpSession session, String connectionId,
+                                                  Result result, String command) throws Exception
+    {
+        if (result.getMessage().startsWith("SUCCESS") && "DROP".equalsIgnoreCase(command))
         {
             session.setAttribute("schemaMap",
                     genericDAO.populateSchemaMap((String) session.getAttribute("schema"), connectionId));
@@ -145,10 +158,10 @@ public class IndexController
     private void processBulkIndexCommands(Model model, HttpServletRequest request,
                                           String schema, String connectionId) throws Exception
     {
-        String[] indexList = request.getParameterValues("selected_idx[]");
+        String[] indexList = request.getParameterValues(INDEX_LIST_PARAM);
         String command = request.getParameter("submit_mult");
 
-        log.info("tableList = {}", Arrays.toString(indexList));
+        log.info("indexList = {}", Arrays.toString(indexList));
         log.info("command = {}", command);
 
         if (indexList == null)

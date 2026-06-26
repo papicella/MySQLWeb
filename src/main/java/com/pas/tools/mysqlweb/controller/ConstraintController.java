@@ -23,6 +23,8 @@ import java.util.List;
 @Controller
 public class ConstraintController
 {
+    private static final String CONSTRAINT_LIST_PARAM = "selected_constraint[]";
+
     @Autowired
     ConstraintDAO constraintDAO;
 
@@ -33,7 +35,7 @@ public class ConstraintController
     public String showConstraints(Model model, HttpServletResponse response,
                                   HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -50,16 +52,14 @@ public class ConstraintController
             handleConstraintAction(model, request, schema, connectionId, constraintAction);
         }
 
-        List<Constraint> constraints = constraintDAO.retrieveConstraintList(schema, null, connectionId);
-        populateConstraintsModel(model, session, schema, constraints);
-        return "constraints";
+        return renderConstraintsPage(model, schema, connectionId, null);
     }
 
     @PostMapping("/constraints")
     public String performConstraintAction(Model model, HttpServletResponse response,
                                           HttpServletRequest request, HttpSession session) throws Exception
     {
-        if (redirectIfNoConnection(response, session))
+        if (requireConnection(response, session))
         {
             return null;
         }
@@ -68,25 +68,29 @@ public class ConstraintController
 
         String schema = resolveSchema(request, session);
         String connectionId = Utils.getConnectionSessionId(session);
-        List<Constraint> constraints;
+        String search = request.getParameter("searchpressed") != null ? request.getParameter("search") : null;
 
-        if (request.getParameter("searchpressed") != null)
-        {
-            String search = request.getParameter("search");
-            constraints = constraintDAO.retrieveConstraintList(schema, search, connectionId);
-            model.addAttribute("search", search);
-        }
-        else
+        if (search == null)
         {
             processBulkConstraintCommands(model, request, schema, connectionId);
-            constraints = constraintDAO.retrieveConstraintList(schema, null, connectionId);
         }
 
-        populateConstraintsModel(model, session, schema, constraints);
+        return renderConstraintsPage(model, schema, connectionId, search);
+    }
+
+    private String renderConstraintsPage(Model model, String schema, String connectionId, String search)
+            throws Exception
+    {
+        List<Constraint> constraints = constraintDAO.retrieveConstraintList(schema, search, connectionId);
+        populateConstraintsModel(model, schema, connectionId, constraints);
+        if (search != null)
+        {
+            model.addAttribute("search", search);
+        }
         return "constraints";
     }
 
-    private boolean redirectIfNoConnection(HttpServletResponse response, HttpSession session) throws Exception
+    private boolean requireConnection(HttpServletResponse response, HttpSession session) throws Exception
     {
         if (Utils.verifyConnection(response, session))
         {
@@ -105,10 +109,9 @@ public class ConstraintController
         return schema;
     }
 
-    private void populateConstraintsModel(Model model, HttpSession session, String schema,
-                                            List<Constraint> constraints) throws Exception
+    private void populateConstraintsModel(Model model, String schema, String connectionId,
+                                          List<Constraint> constraints) throws Exception
     {
-        String connectionId = Utils.getConnectionSessionId(session);
         int count = constraints.size();
         model.addAttribute("records", count);
         model.addAttribute("estimatedrecords", count);
@@ -125,12 +128,18 @@ public class ConstraintController
             return;
         }
 
+        applyConstraintDrop(model, request, schema, connectionId);
+    }
+
+    private void applyConstraintDrop(Model model, HttpServletRequest request, String schema,
+                                     String connectionId) throws Exception
+    {
         Result result = constraintDAO.simpleconstraintCommand(
                 schema,
                 request.getParameter("constraintName"),
                 request.getParameter("tableName"),
                 request.getParameter("constraintType"),
-                constraintAction,
+                "DROP",
                 connectionId);
         model.addAttribute("result", result);
     }
@@ -138,10 +147,10 @@ public class ConstraintController
     private void processBulkConstraintCommands(Model model, HttpServletRequest request,
                                                String schema, String connectionId) throws Exception
     {
-        String[] constraintList = request.getParameterValues("selected_constraint[]");
+        String[] constraintList = request.getParameterValues(CONSTRAINT_LIST_PARAM);
         String command = request.getParameter("submit_mult");
 
-        log.info("tableList = {}", Arrays.toString(constraintList));
+        log.info("constraintList = {}", Arrays.toString(constraintList));
         log.info("command = {}", command);
 
         if (constraintList == null)

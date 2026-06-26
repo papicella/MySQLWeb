@@ -1,1 +1,1 @@
-mvn test -Dtest=LoginControllerTest,TableControllerTest
+mvn test -Dtest=IndexControllerTest,ViewControllerTest,ConstraintControllerTest,LoginControllerTest,TableControllerTest
